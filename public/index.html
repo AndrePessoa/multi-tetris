@@ -78,10 +78,10 @@
       last = now;
     });
 
-    socket.on('gamestart', function(){
+    socket.on('game start', function(){
       play();
     });
-    socket.on('gameend', function(){
+    socket.on('game end', function(){
       lose();
     });
 
@@ -243,17 +243,6 @@
     function addEvents() {
       document.addEventListener('keydown', keydown, false);
       window.addEventListener('resize', resize, false);
-    }
-
-    function resize(event) {
-      canvas.width   = canvas.clientWidth;  // set canvas logical size equal to its physical size
-      canvas.height  = canvas.clientHeight; // (ditto)
-      ucanvas.width  = ucanvas.clientWidth;
-      ucanvas.height = ucanvas.clientHeight;
-      dx = canvas.width  / nx; // pixel size of a single tetris block
-      dy = canvas.height / ny; // (ditto)
-      invalidate();
-      invalidateNext();
     }
 
     function keydown(ev) {

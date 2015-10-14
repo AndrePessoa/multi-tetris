@@ -7,7 +7,11 @@ var io = require('socket.io')(http);
 app.use(express.static(__dirname + '/public'));
 
 app.get('/', function(req, res){
-  res.sendFile(__dirname + '/public/index.html');
+  res.sendFile(__dirname + '/public/mobile.html');
+});
+
+app.get('/control', function(req, res){
+  res.sendFile(__dirname + '/public/mobile.html');
 });
 
 var app_started = false;
@@ -185,8 +189,9 @@ io.on('connection', function(socket){
 		}
 
 		//resize(); // setup all our sizing information
-		reset();  // reset the per-game variables
+		
 	 	if( !app_started ){
+	 		reset();  // reset the per-game variables
 	  		frame();  // start the first frame
 		}
 
@@ -227,8 +232,8 @@ io.on('connection', function(socket){
 	// GAME LOGIC
 	//-------------------------------------------------------------------------
 
-	function play() { console.log('jogo iniciado'); socket.to('room').emit('gamestart',{}); reset();          playing = true;    }
-	function lose() { console.log('jogo finalizado'); socket.to('room').emit('gameend',{}); setVisualScore(); playing = false;  }
+	function play() { console.log('jogo iniciado'); socket.to('room').emit('game start',{}); reset();          playing = true;    }
+	function lose() { console.log('jogo finalizado'); socket.to('room').emit('game end',{}); setVisualScore(); playing = false;  }
 
 	function setVisualScore(n)      { vscore = n || score; invalidateScore(); }
 	function setScore(n)            { score = n; setVisualScore(n);  }

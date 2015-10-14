@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Javascript Tetris</title>
+  <style>
+    body{
+      background: #ddd;
+      width: 100%;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    .keys{
+      position: relative;
+      width: 750px;
+      margin: 0 auto;
+    }
+    .keys > div {
+      width: 250px;
+      height: 250px;
+      text-align: center;
+      padding: 112px 0;
+      background: #51CA7D;
+      float: left;
+      box-sizing: border-box;
+    }
+    .keys > .down{
+      margin: 0 250px;
+    }
+    .keys > .space{
+      background: #aaa;
+      width: 750px;
+    }
+    .keys.off > div{
+      background: #aaa;
+    }
+    .keys.off > .space{
+      background: #51CA7D;
+    }
+    
+  </style>
+</head>
+
+<body>
+
+  <div class="preview">
+    <canvas id="upcoming"></canvas>
+  </div>
+
+  <div class="keys off">
+    <div class="left"   data-code="37">left</div>
+    <div class="rotate" data-code="38">rotate</div>
+    <div class="right"  data-code="39">right</div>
+    <div class="down"   data-code="40">down</div>
+    <div class="space"  data-code="32">start</div>
+  </div>
+
+  <script src="js/stats.js"></script>
+  <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+  <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+  <script>
+  var socket = io(); 
+
+  socket.on('render', function(data){
+    $('.keys').toggleClass('off',!data.playing);
+  });
+
+
+  $(function(){
+
+    $('.keys > div').click(function(){
+      socket.emit('action', $(this).data('code'));
+    });
+
+
+  });  
+  </script>
+
+</body>
+</html>
