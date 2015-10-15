@@ -171,10 +171,12 @@
   invalidateNext();
   invalidateScore();
   invalidateRows();
+
   socket.on('render', function(data){
     next = data.next;
     //console.log(next.type);
-    drawNext()
+    invalid.next = true;
+    drawNext();
     $('.keys').toggleClass('off',!data.playing);
   });
 
@@ -184,6 +186,7 @@
       socket.emit('action', $(this).data('code'));
     });
 
+    socket.emit('add user', 0x000000);
 
   });  
   </script>

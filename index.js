@@ -19,9 +19,47 @@ requestAnimationFrame = function(callback) {
    setTimeout(callback, 1000 / 30); //60
 }
 
+//----------------------
+// user manager
+//----------------------
+
+var users = {
+	pos: 0,
+	list: [],
+	addUser: function( socket ){
+		var has = false
+		for (var i = this.list.length - 1; i >= 0; i--) {
+			has = has || ( this.list[i].id == socket.id );
+		};
+
+		if( !has ){
+			this.list.push( socket );
+		};
+		return socket;
+	},
+	removeUser: function( socket ){
+		if( this.list.indexOf( socket ) > -1 ){
+			this.list.splice( this.list.indexOf( socket ), 1 );
+		}
+		return socket;
+	},
+	current: function(){
+		return this.list[ this.pos ];
+	},
+	next: function(){
+		this.pos = ( this.pos < this.list.length - 1 )? this.pos + 1 : 0;
+
+	},
+	getUserOffset: function( user ){
+
+	}
+}
+
 //-------------------------------------------------------------------------
 // game variables (initialized during reset)
 //-------------------------------------------------------------------------
+
+
 
 var dx, dy,        // pixel size of a single tetris block
     blocks,        // 2 dimensional array (nx*ny) representing tetris court - either empty block or occupied by a 'piece'
@@ -48,10 +86,24 @@ var KEY     = { ESC: 27, SPACE: 32, LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40 },
     nu      = 5;  // width/height of upcoming preview (in blocks)
 
 io.on('connection', function(socket){
+	//console.log( socket );
 	socket.join('room');
+	
+	socket.on('add user', function(color){
+		console.log( 'New user: ', color );
+		users.addUser( socket );
+	});
+
 	socket.on('action', function(command){
 		console.log( 'Command: ', command );
-		keydown( {keyCode: command} );
+		if( socket == users.current() || playing == false ){
+			keydown( {keyCode: command} );
+		};
+	});
+
+	socket.on('disconnect', function () {
+		io.emit('user disconnected');
+		users.removeUser( socket );
 	});
 
 	//-------------------------------------------------------------------------
@@ -77,9 +129,6 @@ io.on('connection', function(socket){
 	//-------------------------------------------------------------------------
 	// game constants
 	//-------------------------------------------------------------------------
-
-
-
 
 
 	//-------------------------------------------------------------------------
@@ -315,6 +364,10 @@ io.on('connection', function(socket){
 	    setCurrentPiece(next);
 	    setNextPiece(randomPiece());
 	    clearActions();
+
+	    users.next();
+	    console.log( "current user: " + users.current().id );
+
 	    if (occupied(current.type, current.x, current.y, current.dir)) {
 	      lose();
 	    }
@@ -373,9 +426,6 @@ io.on('connection', function(socket){
 	//-------------------------------------------------------------------------
 
 	run();
-
-
-
 });
 
 
