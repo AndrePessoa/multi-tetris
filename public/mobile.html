@@ -59,6 +59,7 @@
 <body>
 
   <div class="preview">
+    <div class="msg" ></div>
     <canvas id="upcoming"></canvas>
   </div>
 
@@ -180,6 +181,13 @@
     $('.keys').toggleClass('off',!data.playing);
   });
 
+  socket.on('start turn', function(data){
+    $('.msg').html('Seu turno.');
+  });
+
+  socket.on('end turn', function(data){
+    $('.msg').html('');
+  });
 
   $(function(){
     $('.keys > div').click(function(){

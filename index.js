@@ -365,7 +365,9 @@ io.on('connection', function(socket){
 	    setNextPiece(randomPiece());
 	    clearActions();
 
+	    users.current().emit('end turn');
 	    users.next();
+	    users.current().emit('start turn');
 	    console.log( "current user: " + users.current().id );
 
 	    if (occupied(current.type, current.x, current.y, current.dir)) {
