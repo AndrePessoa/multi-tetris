@@ -6,7 +6,7 @@
     body      { font-family: Helvetica, sans-serif; }
     #tetris   { margin: 1em auto; padding: 1em; border: 4px solid black; border-radius: 10px; background-color: #F8F8F8; }
     #stats    { display: inline-block; vertical-align: top; }
-    #canvas   { display: inline-block; vertical-align: top; background: url(img/texture.jpg); box-shadow: 10px 10px 10px #999; border: 2px solid #333; }
+    #canvas   { display: inline-block; vertical-align: top; background: transparent; box-shadow: 10px 10px 10px #999; border: 2px solid #333; }
     #menu     { display: inline-block; vertical-align: top; position: relative; }
     #menu p   { margin: 0.5em 0; text-align: center; }
     #menu p a { text-decoration: none; color: black; }
@@ -14,13 +14,11 @@
     #score    { color: red; font-weight: bold; vertical-align: middle; }
     #rows     { color: blue; font-weight: bold; vertical-align: middle; }
     #stats    { position: absolute; bottom: 0em; right: 1em; }
-    @media screen and (min-width:   0px) and (min-height:   0px)  { #tetris { font-size: 0.75em; width: 250px; } #menu { width: 100px; height: 200px; } #upcoming { width:  50px; height:  50px; } #canvas { width: 100px; height: 200px; } } /* 10px chunks */
-    @media screen and (min-width: 400px) and (min-height: 400px)  { #tetris { font-size: 1.00em; width: 350px; } #menu { width: 150px; height: 300px; } #upcoming { width:  75px; height:  75px; } #canvas { width: 150px; height: 300px; } } /* 15px chunks */
-    @media screen and (min-width: 500px) and (min-height: 500px)  { #tetris { font-size: 1.25em; width: 450px; } #menu { width: 200px; height: 400px; } #upcoming { width: 100px; height: 100px; } #canvas { width: 200px; height: 400px; } } /* 20px chunks */
-    @media screen and (min-width: 600px) and (min-height: 600px)  { #tetris { font-size: 1.50em; width: 550px; } #menu { width: 250px; height: 500px; } #upcoming { width: 125px; height: 125px; } #canvas { width: 250px; height: 500px; } } /* 25px chunks */
-    @media screen and (min-width: 700px) and (min-height: 700px)  { #tetris { font-size: 1.75em; width: 650px; } #menu { width: 300px; height: 600px; } #upcoming { width: 150px; height: 150px; } #canvas { width: 300px; height: 600px; } } /* 30px chunks */
-    @media screen and (min-width: 800px) and (min-height: 800px)  { #tetris { font-size: 2.00em; width: 750px; } #menu { width: 350px; height: 700px; } #upcoming { width: 175px; height: 175px; } #canvas { width: 350px; height: 700px; } } /* 35px chunks */
-    @media screen and (min-width: 900px) and (min-height: 900px)  { #tetris { font-size: 2.25em; width: 850px; } #menu { width: 400px; height: 800px; } #upcoming { width: 200px; height: 200px; } #canvas { width: 400px; height: 800px; } } /* 40px chunks */
+    
+    #tetris { font-size: 2.25em; width: 720px; } 
+    #menu { width: 100px; height: 500px; }  
+    #canvas { width: 600px; height: 440px; }
+
   </style>
 </head>
 
@@ -28,8 +26,7 @@
 
   <div id="tetris">
     <div id="menu">
-      <p id="start"><a href="javascript:play();">Press Space to Play.</a></p>
-      <p><canvas id="upcoming"></canvas></p>
+      
       <p>score <span id="score">00000</span></p>
       <p>rows <span id="rows">0</span></p>
     </div>
@@ -118,9 +115,9 @@
         canvas  = get('canvas'),
         ctx     = canvas.getContext('2d'),
         ucanvas = get('upcoming'),
-        uctx    = ucanvas.getContext('2d'),
+        //uctx    = ucanvas.getContext('2d'),
         speed   = { start: 0.6, decrement: 0.005, min: 0.1 }, // how long before piece drops by 1 row (seconds)
-        nx      = 10, // width of tetris court (in blocks)
+        nx      = 30, // width of tetris court (in blocks)
         ny      = 20, // height of tetris court (in blocks)
         nu      = 5;  // width/height of upcoming preview (in blocks)
 
@@ -168,25 +165,52 @@
     // do the bit manipulation and iterate through each
     // occupied block (x,y) for a given piece
     //------------------------------------------------
-    function eachblock(type, x, y, dir, fn) {
-      var bit, result, row = 0, col = 0, blocks = type.blocks[dir];
-      for(bit = 0x8000 ; bit > 0 ; bit = bit >> 1) {
-        if (blocks & bit) {
-          fn(x + col, y + row);
+
+    var pieceObj = {
+      init: function(){
+
+      },
+      eachblock:function (type, x, y, dir, fn) {
+        var bit, result, row = 0, col = 0, blocks = type.blocks[dir];
+        for(bit = 0x8000 ; bit > 0 ; bit = bit >> 1) {
+          if (blocks & bit) {
+            fn(x + col, y + row);
+          }
+          if (++col === 4) {
+            col = 0;
+            ++row;
+          }
         }
-        if (++col === 4) {
-          col = 0;
-          ++row;
-        }
+      },
+      dropPiece: function () {
+        this.eachblock(current.type, current.x, current.y, current.dir, function(x, y) {
+          setBlock(x, y, current.type);
+        });
+      },
+      drawPiece: function (ctx, type, x, y, dir) {
+        var loc = this;
+        this.eachblock(type, x, y, dir, function(x, y) {
+        loc.drawBlock(ctx, x, y, type.color);
+        });
+      },
+
+      drawBlock: function (ctx, x, y, color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(x*dx, y*dy, dx, dy);
+        ctx.strokeRect(x*dx, y*dy, dx, dy)
       }
     }
+
+
+
+    
 
     //-----------------------------------------------------
     // check if a piece can fit into a position in the grid
     //-----------------------------------------------------
     function occupied(type, x, y, dir) {
       var result = false
-      eachblock(type, x, y, dir, function(x, y) {
+      pieceObj.eachblock(type, x, y, dir, function(x, y) {
         if ((x < 0) || (x >= nx) || (y < 0) || (y >= ny) || getBlock(x,y))
           result = true;
       });
@@ -208,6 +232,7 @@
       var type = pieces.splice(random(0, pieces.length-1), 1)[0];
       return { type: type, dir: DIR.UP, x: Math.round(random(0, nx - type.size)), y: 0 };
     }
+
 
 
     //-------------------------------------------------------------------------
@@ -268,8 +293,8 @@
     function resize(event) {
       canvas.width   = canvas.clientWidth;  // set canvas logical size equal to its physical size
       canvas.height  = canvas.clientHeight; // (ditto)
-      ucanvas.width  = ucanvas.clientWidth;
-      ucanvas.height = ucanvas.clientHeight;
+      //ucanvas.width  = ucanvas.clientWidth;
+      //ucanvas.height = ucanvas.clientHeight;
       dx = canvas.width  / nx; // pixel size of a single tetris block
       dy = canvas.height / ny; // (ditto)
       invalidate();
@@ -282,7 +307,7 @@
     //-------------------------------------------------------------------------
 
     function play() { 
-      hide('start'); 
+      //hide('start'); 
       reset();          
       playing = true;  
       console.log( 'inicio' );
@@ -316,6 +341,7 @@
       clearScore();
       setCurrentPiece(next);
       setNextPiece();
+
     }
 
     function update(idt) {
@@ -380,11 +406,7 @@
       }
     }*/
 
-    function dropPiece() {
-      eachblock(current.type, current.x, current.y, current.dir, function(x, y) {
-        setBlock(x, y, current.type);
-      });
-    }
+    
 
     function removeLines() {
       var x, y, complete, n = 0;
@@ -430,7 +452,7 @@
       ctx.lineWidth = 1;
       ctx.translate(0.5, 0.5); // for crisp 1px black lines
       drawCourt();
-      drawNext();
+      //drawNext();
       drawScore();
       drawRows();
       ctx.restore();
@@ -439,13 +461,13 @@
     function drawCourt() {
       if (invalid.court) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (playing)
-          drawPiece(ctx, current.type, current.x, current.y, current.dir);
+        if (playing) pieceObj.drawPiece(ctx, current.type, current.x, current.y, current.dir);
+
         var x, y, block;
         for(y = 0 ; y < ny ; y++) {
           for (x = 0 ; x < nx ; x++) {
             if (block = getBlock(x,y))
-              drawBlock(ctx, x, y, block.color);
+              pieceObj.drawBlock(ctx, x, y, block.color);
           }
         }
         ctx.strokeRect(0, 0, nx*dx - 1, ny*dy - 1); // court boundary
@@ -453,19 +475,7 @@
       }
     }
 
-    function drawNext() {
-      if (invalid.next) {
-        var padding = (nu - next.type.size) / 2; // half-arsed attempt at centering next piece display
-        uctx.save();
-        uctx.translate(0.5, 0.5);
-        uctx.clearRect(0, 0, nu*dx, nu*dy);
-        drawPiece(uctx, next.type, padding, padding, next.dir);
-        uctx.strokeStyle = 'black';
-        uctx.strokeRect(0, 0, nu*dx - 1, nu*dy - 1);
-        uctx.restore();
-        invalid.next = false;
-      }
-    }
+    
 
     function drawScore() {
       if (invalid.score) {
@@ -481,17 +491,7 @@
       }
     }
 
-    function drawPiece(ctx, type, x, y, dir) {
-      eachblock(type, x, y, dir, function(x, y) {
-        drawBlock(ctx, x, y, type.color);
-      });
-    }
-
-    function drawBlock(ctx, x, y, color) {
-      ctx.fillStyle = color;
-      ctx.fillRect(x*dx, y*dy, dx, dy);
-      ctx.strokeRect(x*dx, y*dy, dx, dy)
-    }
+    
 
     //-------------------------------------------------------------------------
     // FINALLY, lets run the game

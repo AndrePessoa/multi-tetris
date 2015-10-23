@@ -81,7 +81,7 @@ var KEY     = { ESC: 27, SPACE: 32, LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40 },
     //ucanvas = get('upcoming'),
     //uctx    = ucanvas.getContext('2d'),
     speed   = { start: 0.6, decrement: 0.005, min: 0.1 }, // how long before piece drops by 1 row (seconds)
-    nx      = 10, // width of tetris court (in blocks)
+    nx      = 30, // width of tetris court (in blocks)
     ny      = 20, // height of tetris court (in blocks)
     nu      = 5;  // width/height of upcoming preview (in blocks)
 
@@ -125,28 +125,6 @@ io.on('connection', function(socket){
 	}*/
 
 
-
-	//-------------------------------------------------------------------------
-	// game constants
-	//-------------------------------------------------------------------------
-
-
-	//-------------------------------------------------------------------------
-	// tetris pieces
-	//
-	// blocks: each element represents a rotation of the piece (0, 90, 180, 270)
-	//         each element is a 16 bit integer where the 16 bits represent
-	//         a 4x4 set of blocks, e.g. j.blocks[0] = 0x44C0
-	//
-	//             0100 = 0x4 << 3 = 0x4000
-	//             0100 = 0x4 << 2 = 0x0400
-	//             1100 = 0xC << 1 = 0x00C0
-	//             0000 = 0x0 << 0 = 0x0000
-	//                               ------
-	//                               0x44C0
-	//
-	//-------------------------------------------------------------------------
-
 	var i = { size: 4, blocks: [0x0F00, 0x2222, 0x00F0, 0x4444], color: 'cyan'   };
 	var j = { size: 3, blocks: [0x44C0, 0x8E00, 0x6440, 0x0E20], color: 'blue'   };
 	var l = { size: 3, blocks: [0x4460, 0x0E80, 0xC440, 0x2E00], color: 'orange' };
@@ -159,34 +137,151 @@ io.on('connection', function(socket){
 	// do the bit manipulation and iterate through each
 	// occupied block (x,y) for a given piece
 	//------------------------------------------------
-	function eachblock(type, x, y, dir, fn) {
-	  var bit, result, row = 0, col = 0, blocks = type.blocks[dir];
-	  for(bit = 0x8000 ; bit > 0 ; bit = bit >> 1) {
-	    if (blocks & bit) {
-	      fn(x + col, y + row);
-	    }
-	    if (++col === 4) {
-	      col = 0;
-	      ++row;
-	    }
-	  }
-	}
 
-	//-----------------------------------------------------
-	// check if a piece can fit into a position in the grid
-	//-----------------------------------------------------
-	function occupied(type, x, y, dir) {
-	  var result = false
-	  eachblock(type, x, y, dir, function(x, y) {
-	    if ((x < 0) || (x >= nx) || (y < 0) || (y >= ny) || getBlock(x,y))
-	      result = true;
-	  });
-	  return result;
-	}
+	var pieceObj = {
+	    init: function(){
 
-	function unoccupied(type, x, y, dir) {
-	  return !occupied(type, x, y, dir);
-	}
+	    },
+	    eachblock: function (type, x, y, dir, fn) {
+	        var bit, result, row = 0, col = 0, blocks = type.blocks[dir];
+	        for(bit = 0x8000 ; bit > 0 ; bit = bit >> 1) {
+	          if (blocks & bit) {
+	            fn(x + col, y + row);
+	          }
+	          if (++col === 4) {
+	            col = 0;
+	            ++row;
+	          }
+	        }
+	    },
+	    dropPiece: function () {
+	    	this.eachblock(current.type, current.x, current.y, current.dir, function(x, y) {
+	        	setBlock(x, y, current.type);
+	    	});
+	    },
+	    //setBlock: function (x,y,type)     { blocks[x] = blocks[x] || []; blocks[x][y] = type; invalidate(); },
+
+	    drawPiece: function (ctx, type, x, y, dir) {
+	        var loc = this;
+	        this.eachblock(type, x, y, dir, function(x, y) {
+	        	loc.drawBlock(ctx, x, y, type.color);
+	        });
+	    },
+	    drawBlock: function (ctx, x, y, color) {
+	        ctx.fillStyle = color;
+	        ctx.fillRect(x*dx, y*dy, dx, dy);
+	        ctx.strokeRect(x*dx, y*dy, dx, dy)
+		},
+		occupied: function (type, x, y, dir) {
+			var result = false;
+			this.eachblock(type, x, y, dir, function(x, y) {
+			if ((x < 0) || (x >= nx) || (y < 0) || (y >= ny) || getBlock(x,y))
+			  result = true;
+			});
+			return result;
+		},
+		unoccupied: function (type, x, y, dir) {
+		  return !this.occupied(type, x, y, dir);
+		},
+		dropPiece: function () {
+			this.eachblock(current.type, current.x, current.y, current.dir, function(x, y) {
+		  		setBlock(x, y, current.type);
+		  	});
+		},
+		move: function (dir) {
+		  var x = current.x, y = current.y;
+		  switch(dir) {
+		    case DIR.RIGHT: x = x + 1; break;
+		    case DIR.LEFT:  x = x - 1; break;
+		    case DIR.DOWN:  y = y + 1; break;
+		  }
+		  if (this.unoccupied(current.type, x, y, current.dir)) {
+		    current.x = x;
+		    current.y = y;
+		    invalidate();
+		    return true;
+		  }
+		  else {
+		    return false;
+		  }
+		},
+
+		rotate: function () {
+		  var newdir = (current.dir == DIR.MAX ? DIR.MIN : current.dir + 1);
+		  if (this.unoccupied(current.type, current.x, current.y, newdir)) {
+		    current.dir = newdir;
+		    invalidate();
+		  }
+		},
+
+		drop: function () {
+		  if (!this.move(DIR.DOWN)) {
+		    addScore(10);
+		    this.dropPiece();
+		    this.removeLines();
+		    setCurrentPiece(next);
+		    setNextPiece(randomPiece());
+		    clearActions();
+
+		    users.current().emit('end turn');
+		    users.next();
+		    users.current().emit('start turn');
+		    console.log( "current user: " + users.current().id );
+
+		    if (this.occupied(current.type, current.x, current.y, current.dir)) {
+		      lose();
+		    }
+		  }
+		},
+		update: function (idt) {
+		  if (playing) {
+		    if (vscore < score)
+		    	setVisualScore(vscore + 1);
+		    this.handle(actions.shift());
+		    dt = dt + idt;
+		    if (dt > step) {
+		      dt = dt - step;
+		      this.drop();
+		    }
+		  }
+		},
+		handle: function (action) {
+		  switch(action) {
+		    case DIR.LEFT:  this.move(DIR.LEFT);  break;
+		    case DIR.RIGHT: this.move(DIR.RIGHT); break;
+		    case DIR.UP:    this.rotate();        break;
+		    case DIR.DOWN:  this.drop();          break;
+		  }
+		},
+		removeLine: function (n) {
+		  var x, y;
+		  for(y = n ; y >= 0 ; --y) {
+		    for(x = 0 ; x < nx ; ++x)
+		      setBlock(x, y, (y == 0) ? null : getBlock(x, y-1));
+		  }
+		},
+		removeLines: function () {
+		  var x, y, complete, n = 0;
+		  for(y = ny ; y > 0 ; --y) {
+		    complete = true;
+		    for(x = 0 ; x < nx ; ++x) {
+		      if (!getBlock(x, y))
+		        complete = false;
+		    }
+		    if (complete) {
+		      this.removeLine(y);
+		      y = y + 1; // recheck same line
+		      n++;
+		    }
+		  }
+		  if (n > 0) {
+		    addRows(n);
+		    addScore(100*Math.pow(2,n-1)); // 1: 100, 2: 200, 3: 400, 4: 800
+		  }
+		}
+
+
+    }
 
 	//-----------------------------------------
 	// start with 4 instances of each piece and
@@ -212,7 +307,7 @@ io.on('connection', function(socket){
 		var last = now = timestamp();
 		function frame() {
 			now = timestamp();
-			update(Math.min(1, (now - last) / 1000.0)); // using requestAnimationFrame have to be able to handle large delta's caused when it 'hibernates' in a background or non-visible tab
+			pieceObj.update(Math.min(1, (now - last) / 1000.0)); // using requestAnimationFrame have to be able to handle large delta's caused when it 'hibernates' in a background or non-visible tab
 
 			socket.to('room').emit('render', {
 				now: now,
@@ -307,113 +402,7 @@ io.on('connection', function(socket){
 	  setCurrentPiece(next);
 	  setNextPiece();
 	}
-
-	function update(idt) {
-	  if (playing) {
-	    if (vscore < score)
-	      setVisualScore(vscore + 1);
-	    handle(actions.shift());
-	    dt = dt + idt;
-	    if (dt > step) {
-	      dt = dt - step;
-	      drop();
-	    }
-	  }
-	}
-
-	function handle(action) {
-	  switch(action) {
-	    case DIR.LEFT:  move(DIR.LEFT);  break;
-	    case DIR.RIGHT: move(DIR.RIGHT); break;
-	    case DIR.UP:    rotate();        break;
-	    case DIR.DOWN:  drop();          break;
-	  }
-	}
-
-	function move(dir) {
-	  var x = current.x, y = current.y;
-	  switch(dir) {
-	    case DIR.RIGHT: x = x + 1; break;
-	    case DIR.LEFT:  x = x - 1; break;
-	    case DIR.DOWN:  y = y + 1; break;
-	  }
-	  if (unoccupied(current.type, x, y, current.dir)) {
-	    current.x = x;
-	    current.y = y;
-	    invalidate();
-	    return true;
-	  }
-	  else {
-	    return false;
-	  }
-	}
-
-	function rotate() {
-	  var newdir = (current.dir == DIR.MAX ? DIR.MIN : current.dir + 1);
-	  if (unoccupied(current.type, current.x, current.y, newdir)) {
-	    current.dir = newdir;
-	    invalidate();
-	  }
-	}
-
-	function drop() {
-	  if (!move(DIR.DOWN)) {
-	    addScore(10);
-	    dropPiece();
-	    removeLines();
-	    setCurrentPiece(next);
-	    setNextPiece(randomPiece());
-	    clearActions();
-
-	    users.current().emit('end turn');
-	    users.next();
-	    users.current().emit('start turn');
-	    console.log( "current user: " + users.current().id );
-
-	    if (occupied(current.type, current.x, current.y, current.dir)) {
-	      lose();
-	    }
-	  }
-	}
-
-	function dropPiece() {
-	  eachblock(current.type, current.x, current.y, current.dir, function(x, y) {
-	    setBlock(x, y, current.type);
-	  });
-	}
-
-	function removeLines() {
-	  var x, y, complete, n = 0;
-	  for(y = ny ; y > 0 ; --y) {
-	    complete = true;
-	    for(x = 0 ; x < nx ; ++x) {
-	      if (!getBlock(x, y))
-	        complete = false;
-	    }
-	    if (complete) {
-	      removeLine(y);
-	      y = y + 1; // recheck same line
-	      n++;
-	    }
-	  }
-	  if (n > 0) {
-	    addRows(n);
-	    addScore(100*Math.pow(2,n-1)); // 1: 100, 2: 200, 3: 400, 4: 800
-	  }
-	}
-
-	function removeLine(n) {
-	  var x, y;
-	  for(y = n ; y >= 0 ; --y) {
-	    for(x = 0 ; x < nx ; ++x)
-	      setBlock(x, y, (y == 0) ? null : getBlock(x, y-1));
-	  }
-	}
-
-	//-------------------------------------------------------------------------
-	// RENDERING
-	//-------------------------------------------------------------------------
-
+	
 	var invalid = {};
 
 	function invalidate()         { invalid.court  = true; }
