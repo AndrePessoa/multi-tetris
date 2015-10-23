@@ -281,14 +281,10 @@ var pieceObj = {
 
   socket.on('render', function(data){
     next = data.next;
-//<<<<<<< Updated upstream
     //console.log(next.type);
     invalid.next = true;
     drawNext();
-//=======
-    invalid.next = true;
-    drawNext()
-//>>>>>>> Stashed changes
+
     $('.keys').toggleClass('off',!data.playing);
   });
 
