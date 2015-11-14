@@ -18,53 +18,101 @@
       user-select: none;
     }
 
-    .keys{
+    .panel{
       position: relative;
       width: 450px;
       margin: 0 auto;
       padding:0px;
+      overflow: auto;
+      padding-bottom: 65px;   
+    }
+
+    .planel{
+      position: relative;
+    }
+
+    .title {
+      font-size: 4em;
+      height: 75px;
+      color: #AAA;
+    }
+    #new_user{
+      padding: 50px;
+    }
+    #new_user input{
+      background: #ddd;
+      border: none;
+      padding: 10px;
+      font-size: 1.5em;
+      width: 100%;
+
+    }#new_user input:first-child{
+      margin-bottom: 15px;
     }
     .keys > div {
       width: 150px;
       height: 150px;
       text-align: center;
-      padding: 50px;
-      background: #51CA7D;
+      padding: 10px;
+      border: 5px solid #51CA7D;
       float: left;
       border-radius: 50%;
-      
-      display: flex;
-      display: -webkit-flex;
       display: -ms-flexbox;
-
       box-sizing: border-box;
       -webkit-flex-wrap: wrap;
       -ms-flex-wrap: wrap;
-      flex-wrap: wrap;
-      
-      align-items: center;
-      justify-content: center;
     }
+    .keys polygon,
+    .keys path {
+      fill: #51CA7D;
+    }
+
     .keys > .down{
       margin: 0 150px;
     }
     .keys > .space{
-      background: #aaa;
-      width: 450px;
-      border-radius: 0;
+      position: absolute;
+      background: #CE5454;
+      left: 100px;
+      padding: 100px;
+      height: auto;
+      border-radius: 150px;
+      top: 0;
+      height: auto;
+      width: auto;
       margin-top: 20px;
+      opacity: 0;
+      display: none;
+      transition: all 1s, display 0s 1s;
+    }
+    .keys.off > div,
+    .keys.paused > div{
+      border: 5px solid #aaa;
+    }
 
+    .keys.off polygon,
+    .keys.paused polygon,
+    .keys.off path,
+    .keys.paused path {
+      fill: #AAA;
     }
-    .keys.off > div{
-      background: #aaa;
-    }
+
     .keys.off > .space{
       margin-top: 20px;
-      background: #51CA7D;
-      width: 100%;
     }
-    .preview { margin-bottom: 20px; margin-top: 20px;}
-    #upcoming { display: block; margin: 0 auto; background-color: #E0E0E0; }
+    .keys.paused > .space{
+      display: block;
+      opacity: 1;
+      top: 50px;
+    }
+
+    .preview {
+      margin-bottom: 20px;
+      margin-top: 20px;
+      position: absolute;
+      bottom: 0;
+    }
+    #upcoming { position: absolute; display: block; margin: 0 auto; /*background-color: #E0E0E0;*/ }
     @media screen and (min-width:   0px) and (min-height:   0px)  {  #upcoming { width:  50px; height:  50px; }  } /* 10px chunks */
     @media screen and (min-width: 400px) and (min-height: 400px)  {  #upcoming { width:  75px; height:  75px; }  } /* 15px chunks */
     @media screen and (min-width: 500px) and (min-height: 500px)  {  #upcoming { width: 100px; height: 100px; }  } /* 20px chunks */
@@ -72,6 +120,11 @@
     @media screen and (min-width: 700px) and (min-height: 700px)  {  #upcoming { width: 150px; height: 150px; }  } /* 30px chunks */
     @media screen and (min-width: 800px) and (min-height: 800px)  {  #upcoming { width: 175px; height: 175px; }  } /* 35px chunks */
     @media screen and (min-width: 900px) and (min-height: 900px)  {  #upcoming { width: 200px; height: 200px; }  } /* 40px chunks */
+
+    #upcoming { width: 120px !important; height: 120px !important; }
+    .hide{
+      display: none;
+    }
   </style>
 
 </head>
@@ -79,21 +132,48 @@
 <body>
 
 
-  <div class="preview">
-    <<<<<<< Updated upstream
-    <div class="msg" ></div>
-    =======
-    <p>Próxima:</p>
-    >>>>>>> Stashed changes
-    <canvas id="upcoming"></canvas>
-  </div>
-
-  <div class="keys off ">
-    <div class="left"   data-code="37">left</div>
-    <div class="rotate" data-code="38">rotate</div>
-    <div class="right"  data-code="39">right</div>
-    <div class="down"   data-code="40">down</div>
-    <div class="space"  data-code="32">start</div>
+  <div class="panel">
+    <div class="preview">
+      <div class="msg" ></div>      
+    </div>
+    <div class="title">
+      multi-Tetris
+    </div>
+    <div id="new_user">
+      <input type="button" value="trocar cor" id="new_color" />
+      <input type="button" value="entrar" id="add" />
+    </div>
+    <div class="keys off paused hide">
+      <div class="left"   data-code="37">
+        <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+           viewBox="0 0 80 80" style="enable-background:new 0 0 80 80;" xml:space="preserve">
+          <polygon class="st0" points="50.9,8 62.9,8 35,40 62.9,72 50.9,72 23.1,40 "/>
+        </svg>
+      </div>
+      <div class="rotate" data-code="38">
+        <canvas id="upcoming" width="100" height="100"></canvas>
+        <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+           viewBox="240 0 80 80" style="enable-background:new 240 0 80 80;" xml:space="preserve">
+          <path class="st0" d="M266.9,63.1c-8.1-4.6-13.6-13.3-13.6-23.3c0-14.7,12-26.7,26.7-26.7c14.7,0,26.7,12,26.7,26.7l8.1,0.1
+          c0-19.2-15.6-34.8-34.8-34.8S245.2,20.8,245.2,40c0,13.6,7.8,25.4,19.3,31.2c4.7,2.4,3.8-1.8,3.9-1.8
+          C268.3,69.3,269.9,64.8,266.9,63.1z"/>        
+        <polygon class="st0" points="257,73.2 248.8,64.4 260.8,64.1 261.8,52.3 270.1,61.1 268.9,72.9 "/>
+        </svg>
+      </div>
+      <div class="right"  data-code="39">
+        <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+           viewBox="80 0 80 80" style="enable-background:new 80 0 80 80;" xml:space="preserve">
+        <polygon class="st0" points="112.1,72 100.1,72 128,40 100.1,8 112.1,8 139.9,40 "/>
+        </svg>
+      </div>
+      <div class="down"   data-code="40">
+        <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+           viewBox="160 0 80 80" style="enable-background:new 160 0 80 80;" xml:space="preserve">
+        <polygon class="st0" points="168,32.1 168,20.1 200,48 232,20.1 232,32.1 200,59.9 "/>
+        </svg>
+      </div>
+      <div class="space"  data-code="32">start</div>
+    </div>
   </div>
 
   <script src="js/stats.js"></script>
@@ -187,12 +267,14 @@ var pieceObj = {
     */
 }
 
+  var isCurrentPlayer = false;
 
   var dx, dy,        // pixel size of a single tetris block
       blocks,        // 2 dimensional array (nx*ny) representing tetris court - either empty block or occupied by a 'piece'
       actions,       // queue of user actions (inputs)
       playing,       // true|false - game is in progress
       dt,            // time since starting this game
+      pieceToDraw,    // a dynamic piece that will be show to user
       current,       // the current piece
       next,          // the next piece
       score,         // the current score
@@ -217,8 +299,8 @@ var pieceObj = {
   function resize(event) {
       //canvas.width   = canvas.clientWidth;  // set canvas logical size equal to its physical size
       //canvas.height  = canvas.clientHeight; // (ditto)
-      ucanvas.width  = ucanvas.clientWidth;
-      ucanvas.height = ucanvas.clientHeight;
+      //ucanvas.width  = ucanvas.clientWidth;
+      //ucanvas.height = ucanvas.clientHeight;
 
 
       dx = 200  / nx; // pixel size of a single tetris block
@@ -253,23 +335,24 @@ var pieceObj = {
     }
   }
   function drawPiece(ctx, type, x, y, dir) {
-
+    //var color = 'rgba('+type.color.r+','+type.color.g+','+type.color.b+', 0.5)';
     eachblock(type, x, y, dir, function(x, y) {
       drawBlock(ctx, x, y, type.color);
     });
   }
-  function drawNext() {
+  function drawDisplayPiece() {
     
     if (invalid.next) {
-      var padding = (nu - next.type.size) / 2; // half-arsed attempt at centering next piece display
+      
       //console.log(padding)
       uctx.save();
       uctx.translate(0.5, 0.5);
       uctx.clearRect(0, 0, nu*dx, nu*dy);
       //console.log(uctx)
-      drawPiece(uctx, next.type, padding, padding, next.dir);
-      uctx.strokeStyle = 'black';
-      uctx.strokeRect(0, 0, nu*dx - 1, nu*dy - 1);
+      if( pieceToDraw ) var padding = (nu - pieceToDraw.type.size) / 2; // half-arsed attempt at centering next piece display
+      if( pieceToDraw ) drawPiece(uctx, pieceToDraw.type, padding, padding, pieceToDraw.dir);
+      //uctx.strokeStyle = 'black';
+      //uctx.strokeRect(0, 0, nu*dx - 1, nu*dy - 1);
       uctx.restore();
       invalid.next = false;
     }
@@ -280,28 +363,69 @@ var pieceObj = {
   invalidateRows();
 
   socket.on('render', function(data){
-    next = data.next;
+    //next = data.next;
+    current = data.current;
+
     //console.log(next.type);
     invalid.next = true;
-    drawNext();
+    pieceToDraw = ( isCurrentPlayer )? current : next;
+    //pieceToDraw.type.color = data.color;
 
-    $('.keys').toggleClass('off',!data.playing);
+    drawDisplayPiece();
+
+    //
+    $('.keys').toggleClass('paused',!data.playing);
   });
 
+  socket.on('added user', function( data ){
+    next = data;
+    console.log('added', data);
+  })
+
   socket.on('start turn', function(data){
+    isCurrentPlayer = true;
     $('.msg').html('Seu turno.');
+    $('.keys').toggleClass('off',false);
+  });
+
+  socket.on('next turn', function(data){
+    $('.msg').html('Você é o próximo.');
   });
 
   socket.on('end turn', function(data){
+    next = data;
+    isCurrentPlayer = false;
     $('.msg').html('');
+    $('.keys').toggleClass('off',true);
   });
+
 
   $(function(){
     $('.keys > div').click(function(){
       socket.emit('action', $(this).data('code'));
     });
 
-    socket.emit('add user', 0x000000);
+    var usercolor = {
+      r: Math.floor( Math.random() * 255 ),
+      g: Math.floor( Math.random() * 255 ),
+      b: Math.floor( Math.random() * 255 ),
+    }
+
+    $('#new_user').css('background', 'rgba('+usercolor.r+','+usercolor.g+','+usercolor.b+', 1)');
+    $('#new_color').click(function(){
+      usercolor = {
+        r: Math.floor( Math.random() * 255 ),
+        g: Math.floor( Math.random() * 255 ),
+        b: Math.floor( Math.random() * 255 ),
+      }
+      $('#new_user').css('background', 'rgba('+usercolor.r+','+usercolor.g+','+usercolor.b+', 1)');
+    });
+    $('#add').click(function(){
+      $('.keys').removeClass('hide');
+      $('#new_user').addClass('hide');
+      resize();
+      socket.emit('add user', usercolor );
+    });      
 
   });  
   </script>
