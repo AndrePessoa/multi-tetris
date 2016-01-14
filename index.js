@@ -23,6 +23,27 @@ requestAnimationFrame = function(callback) {
 // user manager
 //----------------------
 
+function User( opts ){
+	this.socket = opts.socket;
+	this.color = opts.color || "cccccc";
+	this.piece = opts.piece;
+
+	this.commands = [];
+	this.addCommand = function( command ){
+		this.commands.push( command );
+	};
+	this.getCommand = function(){
+		return this.commands.length > 0? this.commands.pop() : false;
+	};
+	this.resetCommands = function(){
+		this.commands = [];
+	};
+}
+
+//----------------------
+// user manager
+//----------------------
+
 var users = {
 	pos: 0,
 	list: [],
@@ -41,6 +62,7 @@ var users = {
 	removeUser: function( socket ){
 		var index = this.getPos( socket );
 		if( index > -1 ){
+			if( index == this.pos ){ this.next(); }
 			this.list.splice( index, 1 );
 			if( index < this.pos ){ this.pos--; }
 		};
@@ -225,11 +247,11 @@ io.on('connection', function(socket){
 		},
 
 		rotate: function () {
-		  var newdir = (current.dir == DIR.MAX ? DIR.MIN : current.dir + 1);
-		  if (this.unoccupied(current.type, current.x, current.y, newdir)) {
-		    current.dir = newdir;
-		    invalidate();
-		  }
+			var newdir = (current.dir == DIR.MAX ? DIR.MIN : current.dir + 1);
+			if (this.unoccupied(current.type, current.x, current.y, newdir)) {
+				current.dir = newdir;
+				invalidate();
+			}
 		},
 
 		drop: function () {
