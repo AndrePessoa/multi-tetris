@@ -14,14 +14,54 @@ app.get('/control', function(req, res){
   res.sendFile(__dirname + '/public/mobile.html');
 });
 
+var framerate = 30;
 var app_started = false;
 requestAnimationFrame = function(callback) {
-   setTimeout(callback, 1000 / 30); //60
+   setTimeout(callback, 1000 / framerate); //60
 }
 
 //----------------------
 // user manager
 //----------------------
+
+var USERSTATUS = {};
+USERSTATUS.LOGIN = 1;
+USERSTATUS.READY = 2;
+USERSTATUS.PLAYING = 3;
+
+var User = function(socket, color){
+	this.status = USERSTATUS.LOGIN;
+	this.id = socket.id;
+	this.socket = socket;
+	this.color = color;
+	this.piece = null;
+	this.score = 0;
+
+	this.changePiece();
+};
+User.prototype.changePiece = function(){
+	this.piece = PIECES.randomPiece( this.color );
+	this.piece.userId = this.id;
+};
+User.prototype.setStatus = function( status ){
+	this.status = status;
+};
+User.prototype.addScore = function( points ){
+	this.score += points;
+};
+User.prototype.toJson = function(){
+	var json = {};
+	json.id = this.id;
+	json.status = this.status;
+	json.color = this.color;
+	json.piece = this.piece;
+	json.score = this.score;
+
+	return json;
+};
+User.prototype.emit = function(ev, data){
+	this.socket.emit( ev, data || this.toJson() );
+}
 
 var users = {
 	pos: 0,
@@ -41,6 +81,7 @@ var users = {
 	removeUser: function( socket ){
 		var index = this.getPos( socket );
 		if( index > -1 ){
+			delete this.list[index];
 			this.list.splice( index, 1 );
 			if( index < this.pos ){ this.pos--; }
 		};
@@ -56,6 +97,12 @@ var users = {
 		};
 		return index;
 	},
+	getById: function( id ){
+		for (var i = this.list.length - 1; i >= 0; i--) {
+			if( this.list[i].id === id ) return this.list[i]
+		}
+		return false;
+	},
 	get: function( offset ){
 		var pos = this.pos + offset;
 		pos = ( pos < this.list.length - 1 && pos > 0 )? pos : 0;
@@ -66,14 +113,109 @@ var users = {
 	},
 	getUserOffset: function( user ){
 
+	},
+	startGame: function(){
+		for (var i = this.list.length - 1; i >= 0; i--) {
+			this.list[i].setStatus( USERSTATUS.PLAYING );
+		}
+	},
+	stopGame: function(){
+		for (var i = this.list.length - 1; i >= 0; i--) {
+			this.list[i].setStatus( USERSTATUS.READY );
+		}
 	}
 }
+
+
+//--------------------------
+// Pieces 
+// -------------------
+
+//-----------------------------------------
+// start with 4 instances of each piece and
+// pick randomly until the 'bag is empty'
+//-----------------------------------------
+
+var Piece = function( ntype ){
+	this.type 	= ntype;
+	this.dir  	= null;
+	this.color  = null;
+	this.x 		= 0;
+	this.y 		= 0;
+	this.userId = false;
+};
+
+var PIECES = {
+	pieces: [],
+	piecesMaxCollection: 4,
+	types: [
+		/*i*/ { size: 4, blocks: [0x0F00, 0x2222, 0x00F0, 0x4444], color: 'cyan'   },
+		/*j*/ { size: 3, blocks: [0x44C0, 0x8E00, 0x6440, 0x0E20], color: 'blue'   },
+		/*l*/ { size: 3, blocks: [0x4460, 0x0E80, 0xC440, 0x2E00], color: 'orange' },
+		/*o*/ { size: 2, blocks: [0xCC00, 0xCC00, 0xCC00, 0xCC00], color: 'yellow' },
+		/*s*/ { size: 3, blocks: [0x06C0, 0x8C40, 0x6C00, 0x4620], color: 'green'  },
+		/*t*/ { size: 3, blocks: [0x0E40, 0x4C40, 0x4E00, 0x4640], color: 'purple' },
+		/*z*/ { size: 3, blocks: [0x0C60, 0x4C80, 0xC600, 0x2640], color: 'red'    }
+	],
+	rgbToColor: function( color ){
+		return 'rgba('+color.r+','+color.g+','+color.b+', 1)';
+	},
+	randomPiece: function( color ){
+		if (this.pieces.length == 0){
+			this.pieces = [];
+			for (var i = this.types.length - 1; i >= 0; i--) {
+				for (var j = this.piecesMaxCollection; j >= 0; j--) { this.pieces.push( this.types[i] ); }
+			}
+		}
+
+		var type = this.pieces.splice(random(0, this.pieces.length-1), 1)[0];
+		var ntype = {};
+		for (prop in type) {
+		  if (type.hasOwnProperty(prop)) {
+			ntype[prop] = type[prop];
+		  }
+		}
+
+		var piece = new Piece( ntype );
+		piece.color = this.rgbToColor( color || ( users.current()?users.current().color:'white' ) );
+		piece.x		= Math.round(random(0, nx - ntype.size));
+		piece.dir 	= DIR.UP;
+
+		return piece;
+	}
+}
+/*
+var pieces = [];
+function randomPiece( color ) {
+  if (pieces.length == 0)
+    pieces = [i,i,i,i,j,j,j,j,l,l,l,l,o,o,o,o,s,s,s,s,t,t,t,t,z,z,z,z];
+  var type = pieces.splice(random(0, pieces.length-1), 1)[0];
+  var ntype = {};
+  for (prop in type) {
+      if (type.hasOwnProperty(prop)) {
+    	ntype[prop] = type[prop];
+      }
+  }
+
+  var color = color || ( users.current()?users.current().color:'white' );
+  var column = Math.round(random(0, nx - ntype.size));
+  ntype.color = 'rgba('+color.r+','+color.g+','+color.b+', 1)'
+
+  return { type: ntype, dir: DIR.UP, x: Math.round(random(0, nx - ntype.size)), y: 0 };
+}*/
 
 //-------------------------------------------------------------------------
 // game variables (initialized during reset)
 //-------------------------------------------------------------------------
 
 
+//-------------------------------------------------------------------------
+// base helper methods
+//-------------------------------------------------------------------------
+
+function timestamp()           { return new Date().getTime();                             }
+function random(min, max)      { return (min + (Math.random() * (max - min)));            }
+function randomChoice(choices) { return choices[Math.round(random(0, choices.length-1))]; }
 
 var dx, dy,        // pixel size of a single tetris block
     blocks,        // 2 dimensional array (nx*ny) representing tetris court - either empty block or occupied by a 'piece'
@@ -99,22 +241,28 @@ var KEY     = { ESC: 27, SPACE: 32, LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40 },
     ny      = 20, // height of tetris court (in blocks)
     nu      = 5;  // width/height of upcoming preview (in blocks)
 
+var gameSocket = null;
+
 io.on('connection', function(socket){
-	//console.log( socket );
-	socket.join('room');
+	console.log( "Nova conexão aberta", socket.id );	
+
+	socket.on('add viewer', function(){
+		socket.join('room');
+	});
 	
 	socket.on('add user', function(color){
+		socket.join('room');
 		console.log( 'New user: ', color );
-		users.addUser( {
-			socket: socket,
-			color: color,
-			piece: randomPiece( color )
-		});
+		var newUser = new User( socket ,color);
+		users.addUser( newUser );
+		newUser.setStatus( playing ? USERSTATUS.PLAYING : USERSTATUS.READY );
+		console.log(newUser);
 	});
 
 	socket.on('action', function(command){
 		console.log( 'Command: ', command );
-		if( socket == users.current().socket || !playing ){
+		var u = users.current();
+		if( ( u &&  socket.id == u.socket.id ) || !playing ){
 			keydown( {keyCode: command}, socket );
 		};
 	});
@@ -124,13 +272,12 @@ io.on('connection', function(socket){
 		users.removeUser( socket );
 	});
 
-	//-------------------------------------------------------------------------
-	// base helper methods
-	//-------------------------------------------------------------------------
+	if( !gameSocket ){
+		gameSocket = socket;
+		run();
+	}
+});
 
-	function timestamp()           { return new Date().getTime();                             }
-	function random(min, max)      { return (min + (Math.random() * (max - min)));            }
-	function randomChoice(choices) { return choices[Math.round(random(0, choices.length-1))]; }
 
 	/*if (!window.requestAnimationFrame) { // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
 	  window.requestAnimationFrame = window.webkitRequestAnimationFrame ||
@@ -142,14 +289,6 @@ io.on('connection', function(socket){
 	                                 }
 	}*/
 
-
-	var i = { size: 4, blocks: [0x0F00, 0x2222, 0x00F0, 0x4444], color: 'cyan'   };
-	var j = { size: 3, blocks: [0x44C0, 0x8E00, 0x6440, 0x0E20], color: 'blue'   };
-	var l = { size: 3, blocks: [0x4460, 0x0E80, 0xC440, 0x2E00], color: 'orange' };
-	var o = { size: 2, blocks: [0xCC00, 0xCC00, 0xCC00, 0xCC00], color: 'yellow' };
-	var s = { size: 3, blocks: [0x06C0, 0x8C40, 0x6C00, 0x4620], color: 'green'  };
-	var t = { size: 3, blocks: [0x0E40, 0x4C40, 0x4E00, 0x4640], color: 'purple' };
-	var z = { size: 3, blocks: [0x0C60, 0x4C80, 0xC600, 0x2640], color: 'red'    };
 
 	//------------------------------------------------
 	// do the bit manipulation and iterate through each
@@ -174,11 +313,11 @@ io.on('connection', function(socket){
 	    },
 	    dropPiece: function () {
 	    	this.eachblock(current.type, current.x, current.y, current.dir, function(x, y) {
-	        	setBlock(x, y, current.type);
+	        	setBlock(x, y, current);
 	    	});
 	    },
 	    //setBlock: function (x,y,type)     { blocks[x] = blocks[x] || []; blocks[x][y] = type; invalidate(); },
-
+/*
 	    drawPiece: function (ctx, type, x, y, dir) {
 	        var loc = this;
 	        this.eachblock(type, x, y, dir, function(x, y) {
@@ -189,7 +328,7 @@ io.on('connection', function(socket){
 	        ctx.fillStyle = color;
 	        ctx.fillRect(x*dx, y*dy, dx, dy);
 	        ctx.strokeRect(x*dx, y*dy, dx, dy)
-		},
+		},*/
 		occupied: function (type, x, y, dir) {
 			var result = false;
 			this.eachblock(type, x, y, dir, function(x, y) {
@@ -203,7 +342,7 @@ io.on('connection', function(socket){
 		},
 		dropPiece: function () {
 			this.eachblock(current.type, current.x, current.y, current.dir, function(x, y) {
-		  		setBlock(x, y, current.type);
+		  		setBlock(x, y, current);
 		  	});
 		},
 		move: function (dir) {
@@ -235,15 +374,17 @@ io.on('connection', function(socket){
 		drop: function () {
 		  if (!this.move(DIR.DOWN)) {
 		    addScore(10);
+		    users.current().addScore(10);
 		    this.dropPiece();
 		    this.removeLines();
 		    clearActions();
 
-		    users.current().piece = randomPiece( users.current().color );
+		    //users.current().piece = PIECES.randomPiece( users.current().color );
+		    users.current().changePiece();
 		    users.current().socket.emit('end turn', users.current().piece );
 		    users.next();
-		    users.get(1).socket.emit('next turn',  users.current().piece);
-		    users.current().socket.emit('start turn',  users.current().piece);
+		    users.get(1).socket.emit('next turn',  users.current().toJson());
+		    users.current().socket.emit('start turn',  users.current().toJson());
 		    console.log( "current user: " + users.current().socket.id );
 
 		    setCurrentPiece( users.current().piece );
@@ -290,6 +431,11 @@ io.on('connection', function(socket){
 		        complete = false;
 		    }
 		    if (complete) {
+		    	var u;
+		    	for(x = 0 ; x < nx ; ++x) {
+		    		u = users.getById( getBlock(x, y).userId );
+		    		if( u ) u.addScore(1);
+		    	}
 		      this.removeLine(y);
 		      y = y + 1; // recheck same line
 		      n++;
@@ -304,27 +450,6 @@ io.on('connection', function(socket){
 
     }
 
-	//-----------------------------------------
-	// start with 4 instances of each piece and
-	// pick randomly until the 'bag is empty'
-	//-----------------------------------------
-	var pieces = [];
-	function randomPiece( color ) {
-	  if (pieces.length == 0)
-	    pieces = [i,i,i,i,j,j,j,j,l,l,l,l,o,o,o,o,s,s,s,s,t,t,t,t,z,z,z,z];
-	  var type = pieces.splice(random(0, pieces.length-1), 1)[0];
-	  var ntype = {};
-	  for (prop in type) {
-	      if (type.hasOwnProperty(prop)) {
-	    	ntype[prop] = type[prop];
-	      }
-	  }
-
-	  var color = color || ( users.current()?users.current().color:'white' );
-	  ntype.color = 'rgba('+color.r+','+color.g+','+color.b+', 1)'
-	  return { type: ntype, dir: DIR.UP, x: Math.round(random(0, nx - ntype.size)), y: 0 };
-	}
-
 
 	//-------------------------------------------------------------------------
 	// GAME LOOP
@@ -337,7 +462,11 @@ io.on('connection', function(socket){
 			now = timestamp();
 			pieceObj.update(Math.min(1, (now - last) / 1000.0)); // using requestAnimationFrame have to be able to handle large delta's caused when it 'hibernates' in a background or non-visible tab
 
-			socket.to('room').emit('render', {
+			for( var u = users.list.length - 1; u >= 0; u-- ){
+				if( users.list[u].status == USERSTATUS.PLAYING )  users.list[u].emit('user-render');
+			}
+
+			gameSocket.to('room').emit('render', {
 				now: now,
 				dx: dx,
 				dy: dy,
@@ -384,6 +513,7 @@ io.on('connection', function(socket){
 	  }
 	  else if (ev.keyCode == KEY.SPACE) {
 	  	users.pos = users.getPos( socket );
+	  	current = users.current().piece;
 	    play();
 	    handled = true;
 	  }
@@ -394,8 +524,8 @@ io.on('connection', function(socket){
 	// GAME LOGIC
 	//-------------------------------------------------------------------------
 
-	function play() { console.log('jogo iniciado'); socket.to('room').emit('game start',{}); reset();          playing = true; users.current().socket.emit('start turn',  users.current().piece);   }
-	function lose() { console.log('jogo finalizado'); socket.to('room').emit('game end',{}); setVisualScore(); playing = false;  }
+	function play() { console.log('jogo iniciado'); users.startGame(); gameSocket.to('room').emit('game start',{}); reset();         playing = true; users.current().socket.emit('start turn',  users.current().piece);   }
+	function lose() { console.log('jogo finalizado'); users.stopGame(); gameSocket.to('room').emit('game end',{}); setVisualScore(); playing = false;  }
 
 	function setVisualScore(n)      { vscore = n || score; invalidateScore(); }
 	function setScore(n)            { score = n; setVisualScore(n);  }
@@ -408,8 +538,8 @@ io.on('connection', function(socket){
 	function setBlock(x,y,type)     { blocks[x] = blocks[x] || []; blocks[x][y] = type; invalidate(); }
 	function clearBlocks()          { blocks = []; invalidate(); }
 	function clearActions()         { actions = []; }
-	function setCurrentPiece(piece) { current = piece || randomPiece(); invalidate(); return current; }
-	function setNextPiece(piece)    { next    = piece || randomPiece(); invalidateNext(); return next; }
+	function setCurrentPiece(piece) { current = piece || PIECES.randomPiece(); invalidate(); return current; }
+	function setNextPiece(piece)    { next    = piece || PIECES.randomPiece(); invalidateNext(); return next; }
 
 	function reset() {
 	  dt = 0;
@@ -434,8 +564,7 @@ io.on('connection', function(socket){
 	// FINALLY, lets run the game
 	//-------------------------------------------------------------------------
 
-	run();
-});
+	
 
 
 http.listen(3000, function(){

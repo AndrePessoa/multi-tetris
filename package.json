@@ -1,0 +1,25 @@
+{
+  "name": "multi-tetris",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.14.0",
+    "socket.io": "^1.4.6"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AndrePessoa/multi-tetris.git"
+  },
+  "keywords": [],
+  "author": "entreoutros",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AndrePessoa/multi-tetris/issues"
+  },
+  "homepage": "https://github.com/AndrePessoa/multi-tetris#readme"
+}
