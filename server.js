@@ -1,0 +1,1 @@
+var server = import(__dirname + '/app/index.js');

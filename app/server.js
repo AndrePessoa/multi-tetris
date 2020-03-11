@@ -1,130 +1,18 @@
+const { io, http, app } = require('./routes');
+const { User, USERSTATUS } = require('./models/user');
+const users = require('./models/users');
+const Pieces = require('./models/pieces');
+const Piece = require('./models/piece');
 
-var express = require('express');
-var app = express();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
-
-app.use(express.static(__dirname + '/public'));
-
-app.get('/', function(req, res){
-  res.sendFile(__dirname + '/public/mobile.html');
-});
-
-app.get('/control', function(req, res){
-  res.sendFile(__dirname + '/public/mobile.html');
-});
+const {random, timestamp, randomChoice} = require('./libs/utils');
 
 var framerate = 30;
 var app_started = false;
-requestAnimationFrame = function(callback) {
-   setTimeout(callback, 1000 / framerate); //60
-}
 
 //----------------------
 // user manager
 //----------------------
 
-var USERSTATUS = {};
-USERSTATUS.LOGIN = 1;
-USERSTATUS.READY = 2;
-USERSTATUS.PLAYING = 3;
-
-var User = function(socket, color){
-	this.status = USERSTATUS.LOGIN;
-	this.id = socket.id;
-	this.socket = socket;
-	this.color = color;
-	this.piece = null;
-	this.score = 0;
-
-	this.changePiece();
-};
-User.prototype.changePiece = function(){
-	this.piece = PIECES.randomPiece( this.color );
-	this.piece.userId = this.id;
-};
-User.prototype.setStatus = function( status ){
-	this.status = status;
-};
-User.prototype.addScore = function( points ){
-	this.score += points;
-};
-User.prototype.toJson = function(){
-	var json = {};
-	json.id = this.id;
-	json.status = this.status;
-	json.color = this.color;
-	json.piece = this.piece;
-	json.score = this.score;
-
-	return json;
-};
-User.prototype.emit = function(ev, data){
-	this.socket.emit( ev, data || this.toJson() );
-}
-
-var users = {
-	pos: 0,
-	list: [],
-	addUser: function( user ){
-		var has = false
-		for (var i = this.list.length - 1; i >= 0; i--) {
-			has = has || ( this.list[i].id == user.socket.id );
-		};
-
-		if( !has ){
-			user.socket.emit('added user', user.piece);
-			this.list.push( user );
-		};
-		return user;
-	},
-	removeUser: function( socket ){
-		var index = this.getPos( socket );
-		if( index > -1 ){
-			delete this.list[index];
-			this.list.splice( index, 1 );
-			if( index < this.pos ){ this.pos--; }
-		};
-		return socket;
-	},
-	current: function(){
-		return this.list[ this.pos ];
-	},
-	getPos: function( socket ){
-		var index = -1;
-		for (var i = this.list.length - 1; i >= 0; i--) {
-			if( this.list[i].socket == socket ){ index = i; break; }
-		};
-		return index;
-	},
-	getById: function( id ){
-		for (var i = this.list.length - 1; i >= 0; i--) {
-			if( this.list[i].id === id ) return this.list[i]
-		}
-		return false;
-	},
-	get: function( offset ){
-		var pos = this.pos + offset;
-		pos = ( pos < this.list.length - 1 && pos > 0 )? pos : 0;
-		return this.list[ pos ];
-	},
-	next: function(){
-		this.pos = ( this.pos < this.list.length - 1 )? this.pos + 1 : 0;
-	},
-	getUserOffset: function( user ){
-
-	},
-	startGame: function(){
-		for (var i = this.list.length - 1; i >= 0; i--) {
-			this.list[i].setStatus( USERSTATUS.PLAYING );
-		}
-	},
-	stopGame: function(){
-		for (var i = this.list.length - 1; i >= 0; i--) {
-			this.list[i].setStatus( USERSTATUS.READY );
-		}
-	}
-}
 
 
 //--------------------------
@@ -136,54 +24,8 @@ var users = {
 // pick randomly until the 'bag is empty'
 //-----------------------------------------
 
-var Piece = function( ntype ){
-	this.type 	= ntype;
-	this.dir  	= null;
-	this.color  = null;
-	this.x 		= 0;
-	this.y 		= 0;
-	this.userId = false;
-};
 
-var PIECES = {
-	pieces: [],
-	piecesMaxCollection: 4,
-	types: [
-		/*i*/ { size: 4, blocks: [0x0F00, 0x2222, 0x00F0, 0x4444], color: 'cyan'   },
-		/*j*/ { size: 3, blocks: [0x44C0, 0x8E00, 0x6440, 0x0E20], color: 'blue'   },
-		/*l*/ { size: 3, blocks: [0x4460, 0x0E80, 0xC440, 0x2E00], color: 'orange' },
-		/*o*/ { size: 2, blocks: [0xCC00, 0xCC00, 0xCC00, 0xCC00], color: 'yellow' },
-		/*s*/ { size: 3, blocks: [0x06C0, 0x8C40, 0x6C00, 0x4620], color: 'green'  },
-		/*t*/ { size: 3, blocks: [0x0E40, 0x4C40, 0x4E00, 0x4640], color: 'purple' },
-		/*z*/ { size: 3, blocks: [0x0C60, 0x4C80, 0xC600, 0x2640], color: 'red'    }
-	],
-	rgbToColor: function( color ){
-		return 'rgba('+color.r+','+color.g+','+color.b+', 1)';
-	},
-	randomPiece: function( color ){
-		if (this.pieces.length == 0){
-			this.pieces = [];
-			for (var i = this.types.length - 1; i >= 0; i--) {
-				for (var j = this.piecesMaxCollection; j >= 0; j--) { this.pieces.push( this.types[i] ); }
-			}
-		}
 
-		var type = this.pieces.splice(random(0, this.pieces.length-1), 1)[0];
-		var ntype = {};
-		for (prop in type) {
-		  if (type.hasOwnProperty(prop)) {
-			ntype[prop] = type[prop];
-		  }
-		}
-
-		var piece = new Piece( ntype );
-		piece.color = this.rgbToColor( color || ( users.current()?users.current().color:'white' ) );
-		piece.x		= Math.round(random(0, nx - ntype.size));
-		piece.dir 	= DIR.UP;
-
-		return piece;
-	}
-}
 /*
 var pieces = [];
 function randomPiece( color ) {
@@ -213,9 +55,7 @@ function randomPiece( color ) {
 // base helper methods
 //-------------------------------------------------------------------------
 
-function timestamp()           { return new Date().getTime();                             }
-function random(min, max)      { return (min + (Math.random() * (max - min)));            }
-function randomChoice(choices) { return choices[Math.round(random(0, choices.length-1))]; }
+
 
 var dx, dy,        // pixel size of a single tetris block
     blocks,        // 2 dimensional array (nx*ny) representing tetris court - either empty block or occupied by a 'piece'
@@ -379,7 +219,7 @@ io.on('connection', function(socket){
 		    this.removeLines();
 		    clearActions();
 
-		    //users.current().piece = PIECES.randomPiece( users.current().color );
+		    //users.current().piece = Pieces.randomPiece( users.current().color );
 		    users.current().changePiece();
 		    users.current().socket.emit('end turn', users.current().piece );
 		    users.next();
@@ -486,8 +326,7 @@ io.on('connection', function(socket){
 			//stats.update();
 			last = now;
 			app_started = true;
-			requestAnimationFrame(frame);
-
+			setTimeout(function(){ frame(); }, 1000 / framerate);
 		}
 
 		//resize(); // setup all our sizing information
@@ -538,8 +377,8 @@ io.on('connection', function(socket){
 	function setBlock(x,y,type)     { blocks[x] = blocks[x] || []; blocks[x][y] = type; invalidate(); }
 	function clearBlocks()          { blocks = []; invalidate(); }
 	function clearActions()         { actions = []; }
-	function setCurrentPiece(piece) { current = piece || PIECES.randomPiece(); invalidate(); return current; }
-	function setNextPiece(piece)    { next    = piece || PIECES.randomPiece(); invalidateNext(); return next; }
+	function setCurrentPiece(piece) { current = piece || Pieces.randomPiece( null, users.current() ); invalidate(); return current; }
+	function setNextPiece(piece)    { next    = piece || Pieces.randomPiece( null, users.current() ); invalidateNext(); return next; }
 
 	function reset() {
 	  dt = 0;
@@ -565,8 +404,3 @@ io.on('connection', function(socket){
 	//-------------------------------------------------------------------------
 
 	
-
-
-http.listen(process.env.PORT || 3000, function(){
-	console.log('listening on *:'+(process.env.PORT || 3000));
-});
