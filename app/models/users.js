@@ -1,8 +1,20 @@
-module.exports = {
+const USERSTATUS = {};
+USERSTATUS.LOGIN = 1;
+USERSTATUS.READY = 2;
+USERSTATUS.PLAYING = 3;
+
+const users = {
 	pos: 0,
+	activeMaxAmmount: 1,
 	list: [],
+	users: {},
 	addUser: function( user ){
 		var has = false
+
+		if(this.users[user.id]){
+			return this.users[user.id];
+		}
+
 		for (var i = this.list.length - 1; i >= 0; i--) {
 			has = has || ( this.list[i].id == user.socket.id );
 		};
@@ -10,6 +22,7 @@ module.exports = {
 		if( !has ){
 			user.socket.emit('added user', user.piece);
 			this.list.push( user );
+			this.users[user.id] = user;
 		};
 		return user;
 	},
@@ -23,7 +36,10 @@ module.exports = {
 		return socket;
 	},
 	current: function(){
-		return this.list[ this.pos ];
+		return this.list.filter((user) => { return user.status === USERSTATUS.PLAYING });
+	},
+	getLogged: () => {
+		return this.list.filter((user) => { return user.status !== USERSTATUS.LOGIN });
 	},
 	getPos: function( socket ){
 		var index = -1;
@@ -60,3 +76,9 @@ module.exports = {
 		}
 	}
 }
+
+
+module.exports = {
+	users,
+	USERSTATUS
+};

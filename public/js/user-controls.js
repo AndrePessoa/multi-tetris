@@ -48,6 +48,7 @@ $(function(){
       }
     }
     socket.emit('action', $(this).data('code'));
+    Navigator.vibrate(200);
   });
 
   var usercolor = hslToRgb(

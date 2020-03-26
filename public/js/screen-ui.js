@@ -22,6 +22,7 @@ socket.on('render', function( data ){
   rows = data.rows;
   step = data.step;
   color = data.color;
+  users = data.users;
 
   if( color ) $('body').css('background', 'rgba('+ ( 255 - color.r ) +','+ ( 255 - color.g ) +','+ ( 255 - color.b ) +', 1)');
 
@@ -100,6 +101,7 @@ var dx, dy,        // pixel size of a single tetris block
     score,         // the current score
     vscore,        // the currently displayed score (it catches up to score in small chunks - like a spinning slot machine)
     rows,          // number of completed rows in the current game
+    users,         // number of users active
     step;          // how long before current piece drops by 1 row
 
 //-------------------------------------------------------------------------
@@ -159,10 +161,11 @@ var pieceObj = {
     });
   },
 
-  drawBlock: function (ctx, x, y, color) {
+  drawBlock: function (ctx, x, y, color, active) {
     ctx.fillStyle = color;
-    ctx.fillRect(x*dx - 1, y*dy - 1, dx - 2, dy - 2 );
-    //ctx.strokeRect(x*dx, y*dy, dx, dy)
+    ctx.lineWidth = 1;
+    ctx.fillRect(x*dx + 1.5, y*dy + 1.5, dx - 3, dy - 3 );
+    if(!active) ctx.strokeRect(x*dx, y*dy, dx, dy)
   }
 }
 
@@ -227,7 +230,7 @@ function run() {
 
 function showStats() {
   stats.domElement.id = 'stats';
-  get('menu').appendChild(stats.domElement);
+  get('tetris').appendChild(stats.domElement);
 }
 
 function addEvents() {
@@ -236,6 +239,8 @@ function addEvents() {
 }
 
 function keydown(ev) {
+  if(!KEY[ev.keyCode]) return false;
+
   if( ev !== null ) socket.emit('action', ev.keyCode);
   /*var handled = false;
   if (playing) {
@@ -252,7 +257,7 @@ function keydown(ev) {
     handled = true;
   }
   if (handled)*/
-    ev.preventDefault(); // prevent arrow keys from scrolling the page (supported in IE9+ and all other browsers)
+  ev.preventDefault(); // prevent arrow keys from scrolling the page (supported in IE9+ and all other browsers)
 }
 
 function resize(event) {
@@ -420,6 +425,7 @@ function draw() {
   //drawNext();
   drawScore();
   drawRows();
+  drawUsers();
   ctx.restore();
 }
 
@@ -432,7 +438,7 @@ function drawCourt() {
     for(y = 0 ; y < ny ; y++) {
       for (x = 0 ; x < nx ; x++) {
         if (block = getBlock(x,y))
-          pieceObj.drawBlock(ctx, x, y, block.color);
+          pieceObj.drawBlock(ctx, x, y, block.color, block.active);
       }
     }
     //ctx.strokeRect(0, 0, nx*dx - 1, ny*dy - 1); // court boundary
@@ -440,6 +446,10 @@ function drawCourt() {
   }
 }
 
+function drawUsers() {
+  html('users', users);
+  invalid.score = false;
+}
 
 
 function drawScore() {
