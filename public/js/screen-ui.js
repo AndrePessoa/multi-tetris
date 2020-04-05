@@ -239,7 +239,7 @@ function addEvents() {
 }
 
 function keydown(ev) {
-  if(!KEY[ev.keyCode]) return false;
+  if(!Object.values(KEY).includes(ev.keyCode)) return false;
 
   if( ev !== null ) socket.emit('action', ev.keyCode);
   /*var handled = false;

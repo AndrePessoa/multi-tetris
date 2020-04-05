@@ -33,7 +33,5 @@ io.on('connection', function (socket) {
 			game.removeUser(socket);
 		}
 	});
-
-	game.run();
 });
 

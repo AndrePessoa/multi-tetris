@@ -3,6 +3,7 @@ body      {
 	transition: background-color 1s; 
 }
 body:after {
+	pointer-events: none;
 	content: "";
 	min-height: 100vh;
 	background: url(../img/user-bg.jpg);
