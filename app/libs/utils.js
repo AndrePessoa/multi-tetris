@@ -1,41 +1,43 @@
 
-function timestamp()           { return new Date().getTime();                             }
-function random(min, max)      { return (min + (Math.random() * (max - min)));            }
-function randomChoice(choices) { return choices[Math.round(random(0, choices.length-1))]; }
+const timestamp = () => new Date().getTime();
 
-function getServerIP() {
-	var os = require('os');
-	var ifaces = os.networkInterfaces();
+const random = (min, max) => (min + (Math.random() * (max - min)));
 
-	var IP = null;
+const randomChoice = (choices) =>	choices[Math.round(random(0, choices.length - 1))];
 
-	Object.keys(ifaces).forEach( (ifname) => {
-		var alias = 0;
+const getServerIP = () => {
+	const os = require('os');
+	const ifaces = os.networkInterfaces();
 
-		ifaces[ifname].forEach( (iface) => {
-			if ('IPv4' !== iface.family || iface.internal !== false) {
+	let IP = null;
+
+	Object.keys(ifaces).forEach((ifname) => {
+		let alias = 0;
+
+		ifaces[ifname].forEach((iface) => {
+			if (iface.family !== 'IPv4' || iface.internal !== false) {
 			// skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
-			return;
+				return;
 			}
 
 			if (alias >= 1) {
 				// this single interface has multiple ipv4 addresses
-				console.log('1',ifname + ':' + alias, iface.address);
+				// console.log('1', `${ifname}:${alias}`, iface.address);
 				IP = IP || iface.address;
 			} else {
 				// this interface has only one ipv4 adress
-				console.log('2',ifname, iface.address);
+				// console.log('2', ifname, iface.address);
 				IP = IP || iface.address;
 			}
 			++alias;
 		});
 	});
 	return IP || '127.0.0.1';
-}
+};
 
 module.exports = {
 	timestamp,
 	random,
 	randomChoice,
-	getServerIP
-}
+	getServerIP,
+};

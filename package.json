@@ -2,17 +2,32 @@
   "name": "multi-tetris",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "dependencies": {
     "express": "^4.14.0",
     "qrcode": "^1.4.4",
     "socket.io": "^2.3.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.2"
+    "eslint": "^6.8.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-markdown": "^1.0.2",
+    "swagger-ui-express": "^4.1.4",
+    "babel-eslint": "^10.1.0",
+    "jest": "^26.0.1",
+    "chai": "^4.2.0",
+    "mocha": "^6.0.2",
+    "nyc": "^13.3.0",
+    "sinon": "^7.3.2"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "NODE_ENV=test nyc mocha 'app/test/**/*.js' --exit --recursive test",
+    "test:coverage": "NODE_ENV=test nyc  --reporter=html --reporter=text mocha 'app/test/**/*.js' --exit --recursive test",
+    "test:one": "NODE_ENV=test mocha 'app/test/**/*.js' --exit",
+    "lint": "eslint --no-eslintrc -c .eslintrc .",
+    "lint:fix": "eslint --no-eslintrc -c .eslintrc . --fix",
     "start": "nodemon app/server.js"
   },
   "repository": {

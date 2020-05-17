@@ -1,37 +1,36 @@
-const { io, http, app } = require('./routes');
+const { io } = require('./routes');
 const game = require('./controllers/game');
 
-io.on('connection', function (socket) {
-	console.log("Nova conexão aberta:", socket.id);
+io.on('connection', (socket) => {
+	// console.log('Nova conexão aberta:', socket.id);
 
-	socket.on('add viewer', function (type) {
-		console.log('New screen viewer', type);
+	socket.on('add viewer', (type) => {
+		// console.log('New screen viewer', type);
 		socket.join('room');
-		if(type === 'main'){
+		if (type === 'main') {
 			game.setSocket(socket);
 		}
 	});
 
-	socket.on('add user', function (color) {
+	socket.on('add user', (color) => {
 		game.newUser(socket, color);
 	});
 
-	socket.on('reset', function (color) {
-		console.log('Reseting game');
+	socket.on('reset', () => {
+		// console.log('Reseting game');
 		game.reset();
 	});
 
-	socket.on('action', function (command) {
+	socket.on('action', (command) => {
 		game.onUserCommand(socket, command);
 	});
 
-	socket.on('disconnect', function () {
+	socket.on('disconnect', () => {
 		const isGameSocket = game.socket === null || game.socket.id === socket.id;
-		if(isGameSocket){
+		if (isGameSocket) {
 			game.setSocket(null);
-		}else{
+		} else {
 			game.removeUser(socket);
 		}
 	});
 });
-

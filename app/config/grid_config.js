@@ -3,5 +3,5 @@ module.exports = {
 	dx: 10,
 	dy: 10,
 	width: 30, // 30
-	height: 20
+	height: 20,
 };

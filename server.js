@@ -1,1 +1,2 @@
-var server = import(__dirname + '/app/index.js');
+const serverFile = `${__dirname}'/app/server.js`;
+const server = import(serverFile);
