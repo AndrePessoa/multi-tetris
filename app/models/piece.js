@@ -19,7 +19,7 @@ class Piece {
 		this.userId = false;
 	}
 
-	static unoccupied = (blocks) => blocks;
+	static unoccupied(blocks){ return blocks };
 
 	move(dir) {
 		let { x, y } = this;

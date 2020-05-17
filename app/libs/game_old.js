@@ -115,7 +115,7 @@ const pieceObj = {
 			users.next();
 			users.get(1).socket.emit('next turn', users.current().toJson());
 			users.current().socket.emit('start turn', users.current().toJson());
-			console.log(`current user: ${users.current().socket.id}`);
+			logger.info(`current user: ${users.current().socket.id}`);
 
 			setCurrentPiece(users.current().piece);
 			setNextPiece(users.get(1).piece);
