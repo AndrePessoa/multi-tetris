@@ -6,6 +6,7 @@ const io = require('socket.io')(http);
 const QRCode = require('qrcode');
 
 const path = require('path');
+const logger = require('../libs/logger');
 const { getServerIP } = require('../libs/utils');
 
 const publicFolder = path.resolve(`${__dirname}/../../public`);
@@ -27,7 +28,7 @@ app.get('/control/qrcode', (req, res) => {
 	const port = processPort !== 8080 ? `:${processPort}` : '';
 	const base = host.includes('localhost') ? `http://${serverIP}${port}` : host;
 	const URL = `${base}/control/`;
-	// console.log('URL', URL);
+	logger.info('URL', URL);
 	QRCode.toString(URL, { type: 'svg' }, (err, string) => {
 		if (err) throw err;
 		res.set('Content-Type', 'image/svg+xml');
@@ -35,9 +36,8 @@ app.get('/control/qrcode', (req, res) => {
 	});
 });
 
-/*
 http.listen(processPort, () => {
-	console.log(`listening on *:${processPort}`);
-}); */
+	logger.info(`listening on *:${processPort}`);
+});
 
 module.exports = { io, http, app };

@@ -1,3 +1,5 @@
+const logger = require('../libs/logger');
+
 const { USERSTATUS } = require('./users');
 const { DIR } = require('./piece');
 
@@ -23,12 +25,11 @@ class User {
 		this.lastCommands = [];
 		this.status = USERSTATUS.LOGIN;
 
-		/*
 		socket.on('action', (command) => {
-			// console.log('User action:', this.id, command);
-		}); */
+			logger.info('User action:', this.id, command);
+		});
 
-		// console.log('New user: ', color);
+		logger.info('New user: ', color);
 	}
 
 	setPiece(piece) {

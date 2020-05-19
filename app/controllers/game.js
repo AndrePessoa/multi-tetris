@@ -1,3 +1,4 @@
+const logger = require('../libs/logger');
 const { timestamp } = require('../libs/utils');
 const { User } = require('../models/user');
 const Grid = require('./grid');
@@ -60,10 +61,10 @@ class Game {
 	setSocket(socket) {
 		if (this._loop) clearTimeout(this._loop);
 		if (socket) {
-			// console.log('Gaming socket setted', socket.id);
+			logger.info('Gaming socket setted', socket.id);
 			this.run();
 		} else {
-			// console.log('Removing game socket');
+			logger.info('Removing game socket');
 		}
 		this.socket = socket;
 	}
@@ -144,9 +145,9 @@ class Game {
 		if (this.playing) return false;
 		let last = timestamp();
 		const now = last;
-		// console.log('run', last);
+		logger.info('run', last);
 		const frame = () => {
-			// console.log('playing', this.playing);
+			logger.info('playing', this.playing);
 			if (this.playing) {
 				const {
 					nowActual,

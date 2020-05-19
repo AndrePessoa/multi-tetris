@@ -1,8 +1,6 @@
 
 const timestamp = () => new Date().getTime();
-
 const random = (min, max) => (min + (Math.random() * (max - min)));
-
 const randomChoice = (choices) =>	choices[Math.round(random(0, choices.length - 1))];
 
 const getServerIP = () => {
@@ -22,11 +20,9 @@ const getServerIP = () => {
 
 			if (alias >= 1) {
 				// this single interface has multiple ipv4 addresses
-				// console.log('1', `${ifname}:${alias}`, iface.address);
 				IP = IP || iface.address;
 			} else {
 				// this interface has only one ipv4 adress
-				// console.log('2', ifname, iface.address);
 				IP = IP || iface.address;
 			}
 			++alias;

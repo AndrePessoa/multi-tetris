@@ -1,11 +1,12 @@
 const { io } = require('./routes');
+const logger = require('./libs/logger');
 const game = require('./controllers/game');
 
 io.on('connection', (socket) => {
-	// console.log('Nova conexão aberta:', socket.id);
+	logger.info('Nova conexão aberta:', socket.id);
 
 	socket.on('add viewer', (type) => {
-		// console.log('New screen viewer', type);
+		logger.info('New screen viewer', type);
 		socket.join('room');
 		if (type === 'main') {
 			game.setSocket(socket);
@@ -17,7 +18,7 @@ io.on('connection', (socket) => {
 	});
 
 	socket.on('reset', () => {
-		// console.log('Reseting game');
+		logger.info('Reseting game');
 		game.reset();
 	});
 
