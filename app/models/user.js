@@ -3,14 +3,7 @@ const logger = require('../libs/logger');
 const { USERSTATUS } = require('./users');
 const { DIR } = require('./piece');
 
-const KEY = {
-	ESC: 27,
-	SPACE: 32,
-	LEFT: 37,
-	UP: 38,
-	RIGHT: 39,
-	DOWN: 40,
-};
+const KEYS = require('../libs/keys');
 
 const MAX_COMMAND_STACK = 3;
 
@@ -26,10 +19,10 @@ class User {
 		this.status = USERSTATUS.LOGIN;
 
 		socket.on('action', (command) => {
-			logger.info('User action:', this.id, command);
+			logger.log('User action:', this.id, command);
 		});
 
-		logger.info('New user: ', color);
+		logger.log('New user: ', color);
 	}
 
 	setPiece(piece) {
@@ -45,10 +38,10 @@ class User {
 		let result = true;
 		this.lastCommands.forEach((lastCommand) => {
 			switch (lastCommand) {
-			case KEY.LEFT: result = this.piece.move(DIR.LEFT); break;
-			case KEY.RIGHT: result = this.piece.move(DIR.RIGHT); break;
-			case KEY.UP: result = this.piece.rotate(); break;
-			case KEY.DOWN: result = this.piece.drop(); break;
+			case KEYS.LEFT: result = this.piece.move(DIR.LEFT); break;
+			case KEYS.RIGHT: result = this.piece.move(DIR.RIGHT); break;
+			case KEYS.UP: result = this.piece.rotate(); break;
+			case KEYS.DOWN: result = this.piece.drop(); break;
 			default: break;
 			}
 		});

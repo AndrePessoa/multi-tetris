@@ -1,5 +1,3 @@
-const logger = require('../libs/logger');
-
 class Blocks {
 	constructor(height, width) {
 		this.height = height;
@@ -67,7 +65,6 @@ class Blocks {
 			if (result) return true;
 			const isOutsideArea = (block.x < 0) || (block.x >= this.width) || (block.y >= this.height);
 			const isOccupied = this.getBlock(block.x, block.y);
-			logger.info(block.y, block.x, isOutsideArea, isOccupied, this.width, this.height);
 			result = (isOutsideArea || isOccupied);
 		});
 		return result;

@@ -28,7 +28,7 @@ app.get('/control/qrcode', (req, res) => {
 	const port = processPort !== 8080 ? `:${processPort}` : '';
 	const base = host.includes('localhost') ? `http://${serverIP}${port}` : host;
 	const URL = `${base}/control/`;
-	logger.info('URL', URL);
+	logger.log('URL', URL);
 	QRCode.toString(URL, { type: 'svg' }, (err, string) => {
 		if (err) throw err;
 		res.set('Content-Type', 'image/svg+xml');
@@ -37,7 +37,7 @@ app.get('/control/qrcode', (req, res) => {
 });
 
 http.listen(processPort, () => {
-	logger.info(`listening on *:${processPort}`);
+	logger.log(`listening on *:${processPort}`);
 });
 
 module.exports = { io, http, app };

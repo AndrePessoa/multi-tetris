@@ -3,10 +3,10 @@ const logger = require('./libs/logger');
 const game = require('./controllers/game');
 
 io.on('connection', (socket) => {
-	logger.info('Nova conexão aberta:', socket.id);
+	logger.log('New connection:', socket.id);
 
 	socket.on('add viewer', (type) => {
-		logger.info('New screen viewer', type);
+		logger.log('New screen viewer', type);
 		socket.join('room');
 		if (type === 'main') {
 			game.setSocket(socket);
@@ -18,7 +18,7 @@ io.on('connection', (socket) => {
 	});
 
 	socket.on('reset', () => {
-		logger.info('Reseting game');
+		logger.log('Reseting game');
 		game.reset();
 	});
 

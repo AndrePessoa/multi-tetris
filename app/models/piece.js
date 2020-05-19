@@ -19,7 +19,9 @@ class Piece {
 		this.userId = false;
 	}
 
-	static unoccupied(blocks){ return blocks };
+	static unoccupied(blocks) {
+		return blocks;
+	}
 
 	move(dir) {
 		let { x, y } = this;
