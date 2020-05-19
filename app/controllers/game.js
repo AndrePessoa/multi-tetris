@@ -7,6 +7,8 @@ const { users, USERSTATUS } = require('../models/users');
 const pieces = require('../models/pieces');
 const configs = require('../config/grid_config');
 
+const KEYS = require('../libs/keys');
+
 class Game {
 	constructor() {
 		this._loop = null;
@@ -37,15 +39,17 @@ class Game {
 		if (user) {
 			user.setCommand(command);
 		} else {
+			logger.log('Dashboard command', command);
 			switch (command) {
-			case 27: this.gameover(); break;
-			case 32: this.start(); break;
+			case KEYS.ESC: this.gameover(); break;
+			case KEYS.SPACE: this.start(); break;
 			default: break;
 			}
 		}
 	}
 
 	start() {
+		logger.log('Starting. Already playing', this.playing);
 		if (!this.playing) {
 			this.reset();
 			this.grid.reset();
@@ -61,10 +65,10 @@ class Game {
 	setSocket(socket) {
 		if (this._loop) clearTimeout(this._loop);
 		if (socket) {
-			logger.info('Gaming socket setted', socket.id);
+			logger.log('Gaming socket setted', socket.id);
 			this.run();
 		} else {
-			logger.info('Removing game socket');
+			logger.log('Removing game socket');
 		}
 		this.socket = socket;
 	}
@@ -97,9 +101,9 @@ class Game {
 		this.grid.freezeBlocks(blocks);
 	}
 
-	framePlaying(last) {
+	framePlaying(/* last */) {
 		const now = timestamp();
-		pieces.update(Math.min(1, (now - last) / 1000.0));
+		// pieces.update(Math.min(1, (now - last) / 1000.0));
 		// using requestAnimationFrame have to be able to handle large delta's
 		// caused when it 'hibernates' in a background or non-visible tab
 
@@ -145,9 +149,8 @@ class Game {
 		if (this.playing) return false;
 		let last = timestamp();
 		const now = last;
-		logger.info('run', last);
+		logger.log('Runming', last);
 		const frame = () => {
-			logger.info('playing', this.playing);
 			if (this.playing) {
 				const {
 					nowActual,

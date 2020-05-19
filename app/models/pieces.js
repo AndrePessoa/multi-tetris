@@ -46,8 +46,6 @@ class Pieces {
 
 		return piece;
 	}
-
-	static update() {}
 }
 
 module.exports = new Pieces();

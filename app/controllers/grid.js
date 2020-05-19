@@ -65,12 +65,12 @@ class Grid {
 		for (y = n; y >= 0; --y) {
 			for (x = 0; x < this.width; ++x) {
 				if (y === n) {
-					logger.info('removendo block: ', x, y);
+					logger.log('removendo block: ', x, y);
 					// remove last line
 					removedBlocks.push(this.blocks.removeBlock({ x, y }));
 				}
 				const b = (y === 0) ? null : this.blocks.getBlock(x, y - 1);
-				logger.info('movendo block: ', x, y);
+				logger.log('movendo block: ', x, y);
 				// move all above lines
 				this.blocks.setBlock(x, y, b);
 			}
