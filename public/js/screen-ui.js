@@ -182,9 +182,16 @@ const pieceObj = {
 
 	drawBlock(ctx, x, y, color, active) {
 		ctx.fillStyle = color;
+		ctx.strokeStyle = color;
 		ctx.lineWidth = 1;
-		ctx.fillRect(x * dx + 1.5, y * dy + 1.5, dx - 3, dy - 3);
-		if (!active) ctx.strokeRect(x * dx, y * dy, dx, dy);
+		ctx.shadowColor = color.replace(', 1 )', ', 0.25 )');
+		ctx.shadowOffsetX = 0;
+		ctx.shadowOffsetY = 0;
+		ctx.shadowBlur = 5;
+		drawRoundRect( ctx, x * dx + 1.5, y * dy + 1.5, dx - 3, dy - 3, 2 ).fill();;
+		// ctx.fillRect(x * dx + 1.5, y * dy + 1.5, dx - 3, dy - 3);
+		// if (active) ctx.fillRect(x * dx + 1.5, y * dy + 1.5, dx - 3, dy - 3);
+		// if (!active) ctx.strokeRect(x * dx, y * dy, dx, dy);
 	},
 };
 
@@ -473,10 +480,23 @@ function draw() {
 	ctx.restore();
 }
 
+function drawRoundRect(ctx, x, y, width, height, radius) {
+	// ctx.strokeRect(x, y, width, height);
+	if (width < 2 * radius) radius = width / 2;
+	if (height < 2 * radius) radius = height / 2;
+	ctx.beginPath();
+	ctx.moveTo(x + radius, y);
+	ctx.arcTo(x + width, y, x + width, y + height, radius);
+	ctx.arcTo(x + width, y + height, x, y + height, radius);
+	ctx.arcTo(x, y + height, x, y, radius);
+	ctx.arcTo(x, y, x + width, y, radius);
+	ctx.closePath();
+	return ctx;
+}
+
 function drawCourt() {
 	if (invalid.court) {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		if (playing) pieceObj.drawPiece(ctx, current.type, current.x, current.y, current.color, current.dir);
 
 		let x; let y; let
 			block;

@@ -6,8 +6,8 @@ body:after {
 	pointer-events: none;
 	content: "";
 	min-height: 100vh;
-	background: url(../img/user-bg.jpg);
-	background-size: cover;
+	background: rgb(1,0,19);
+	background-image: linear-gradient(to bottom, #000000 17%, #0a4765 99%);
 	display: block;
 	position: fixed;
 	top: 0;
@@ -15,7 +15,6 @@ body:after {
 	right: 0;
 	left: 0;
 	z-index: -1;
-	opacity: 0.8;
 }
 
 #tetris   {   
@@ -25,7 +24,11 @@ body:after {
 	border-radius: 10px;
 	/* background-color: #F8F8F8; */
 	font-size: 1em; 
-	width: 720px;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 #stats    { display: inline-block; vertical-align: top; }
 #canvas {
@@ -33,14 +36,35 @@ body:after {
 	vertical-align: top;
 	background: rgba(0, 0, 0, 0);
 	/* box-shadow: 2px 1px 10px rgba(0, 0, 0, 0.17) inset; */
-	/* border: 5px solid #989898; */
+	border: 1px solid #fff;
 }
 
 .wrapper {
-	position: absolute;
-	/*top: 10%;*/
 	padding: 0px;
-	border: 1px solid white;
+    display: flex;
+}
+
+aside {
+	min-width: 150px;
+    margin-left: 25px;
+    display: flex;
+    justify-content: space-between;
+	flex-direction: column;
+	color: white;
+}
+
+aside ul {
+	border-top: 1px solid #636161;
+    border-bottom: 1px solid #636161;
+    padding-top: 25px;
+    padding-bottom: 25px;
+}
+
+aside ul li {
+	color: white;
+	font-family: 'Khula', sans-serif;
+    font-size: 18px;
+    margin: 10px 0;
 }
 
 #menu     { position: relative; }
@@ -53,10 +77,6 @@ body:after {
 
 #canvas { width: 600px; height: 440px; }
 
-#qrcode{
-	position: absolute;
-	right: 10px;
-	bottom: 10px;
-	width: 300px;
-	z-index: -2;
+#qrcode {
+    width: 150px;
 }

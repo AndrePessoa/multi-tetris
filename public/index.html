@@ -5,6 +5,7 @@
   <style>
 
   </style>
+  <link href="https://fonts.googleapis.com/css2?family=Khula:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="css/reset.css">
   <link rel="stylesheet" type="text/css" href="css/screen-style.css">
 </head>
@@ -12,17 +13,28 @@
 <body>
 
   <div id="tetris">
-    <div id="menu">
-      <p><span id="rows">0</span> <span id="score">00000</span><span id="users">0</span></p>
-    </div>
-    <div class="wrapper">
-      <canvas id="canvas">
-        Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element
-      </canvas>
-    </div>
-    <a id="qrcode" href="/control" target="_blank">
-      <img src="/control/qrcode" />
-    </a>
+    <main>
+      <div id="menu">
+        <p><span id="rows">0</span> <span id="score">00000</span><span id="users">0</span></p>
+      </div>
+      <div class="wrapper">
+        <canvas id="canvas">
+          Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element
+        </canvas>
+        <aside>
+          <ul>
+            <li>1. 10004</li>
+            <li>2. 10003</li>
+            <li>3. 10002</li>
+            <li>4. 10001</li>
+            <li>5. 10000</li>
+          </ul>
+          <a id="qrcode" href="/control" target="_blank">
+            <img src="/control/qrcode" />
+          </a>
+        </aside>
+      </div>
+    </main>
   </div>
 
   <script src="js/stats.js"></script>

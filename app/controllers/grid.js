@@ -25,40 +25,6 @@ class Grid {
 		this.blocks.addBlocks(blocks);
 	}
 
-	/*
-	eachblock(type, x, y, dir, callback) {
-		var bit, row = 0, col = 0, blocks = type.blocks[dir];
-		for(bit = 0x8000 ; bit > 0 ; bit = bit >> 1) {
-			if (blocks & bit) {
-				callback(x + col, y + row);
-			}
-			if (++col === 4) {
-				col = 0;
-				++row;
-			}
-		}
-	}
-	setBlock(x,y,type){
-		this.blocks[x] = this.blocks[x] || [];
-		this.blocks[x][y] = type;
-		// invalidate();
-	}
-	getBlock(x,y){
-		return (this.blocks[x] ? this.blocks[x][y] : null);
-	}
-	occupied(type, x, y, dir) {
-		var result = false;
-		this.eachblock(type, x, y, dir, function(x, y) {
-			const isOutsideArea = (x < 0) || (x >= nx) || (y < 0) || (y >= ny);
-			const isOccupied = this.getBlock(x,y) !== null;
-			result = result && (isOutsideArea || isOccupied);
-		});
-		return result;
-	}
-	unoccupied(type, x, y, dir) {
-		return !this.occupied(type, x, y, dir);
-	}
-	*/
 	removeLine(n) {
 		let x; let y; const
 			removedBlocks = [];
