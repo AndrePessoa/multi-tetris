@@ -1,3 +1,5 @@
+const IMPACT_TYPES = require('../libs/impactTypes');
+
 class Blocks {
 	constructor(height, width) {
 		this.height = height;
@@ -60,12 +62,21 @@ class Blocks {
 	}
 
 	occupied(blocks) {
-		let result = false;
+		let result = IMPACT_TYPES.NONE;
 		blocks.forEach((block) => {
 			if (result) return true;
 			const isOutsideArea = (block.x < 0) || (block.x >= this.width) || (block.y >= this.height);
 			const isOccupied = this.getBlock(block.x, block.y);
-			result = (isOutsideArea || isOccupied);
+			const isInvalid = (isOutsideArea || isOccupied);
+
+			if (isInvalid) {
+				const isActiveBlock = isOccupied && isOccupied.active;
+				result = isActiveBlock
+					? IMPACT_TYPES.MOVING
+					: IMPACT_TYPES.IMPACT;
+			} else {
+				result = IMPACT_TYPES.NONE;
+			}
 		});
 		return result;
 	}

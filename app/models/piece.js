@@ -31,12 +31,13 @@ class Piece {
 		case DIR.DOWN: y += 1; break;
 		default: break;
 		}
-		if (this.unoccupied(this.getBlocks({ x, y }))) {
+		const impact = this.unoccupied(this.getBlocks({ x, y }));
+		if (impact) {
 			this.x = x;
 			this.y = y;
-			return true;
+			return impact;
 		}
-		return false;
+		return impact;
 	}
 
 	getBlocks(altAttrs) {

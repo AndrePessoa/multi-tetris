@@ -1,5 +1,7 @@
 const logger = require('../libs/logger');
-const { timestamp } = require('../libs/utils');
+const { timestamp, random } = require('../libs/utils');
+const IMPACT_TYPES = require('../libs/impactTypes');
+
 const { User } = require('../models/user');
 const Grid = require('./grid');
 const Block = require('../models/block');
@@ -9,19 +11,20 @@ const configs = require('../config/grid_config');
 
 const KEYS = require('../libs/keys');
 
+const COLUMNS = 6;
+
 class Game {
 	constructor() {
 		this._loop = null;
+		this._columns = [];
 		this.playing = false;
 		this.socket = null;
-		//
 		this.score = 0;
 		this.vscore = 0;
 		this.removedRows = 1;
 		this.grid = (new Grid(configs.height, configs.width));
 	}
 
-	//
 	newUser(socket, color) {
 		const newUser = new User(socket, color);
 		users.addUser(newUser);
@@ -73,6 +76,15 @@ class Game {
 		this.socket = socket;
 	}
 
+	getColumn() {
+		if (!this._columns.length) {
+			for (let index = 0; index < COLUMNS; index++) {
+				this._columns.push(index);
+			}
+		}
+		return this._columns.splice(random(0, this._columns.length - 1), 1)[0];
+	}
+
 	createBaseBlocks() {
 		/* this.grid.freezeBlocks([
 			new Block({x: 0, y: 20, color: 'grey'}),
@@ -93,7 +105,7 @@ class Game {
 		for (let y = this.grid.height; y >= this.grid.height - height; --y) {
 			for (let x = 0; x < this.grid.width; ++x) {
 				if (Math.random() < rate) {
-					blocks.push(new Block({ x, y, color: 'grey' }));
+					blocks.push(new Block({ x, y, color: 'rgba( 255, 255, 255, 1 )' }));
 				}
 			}
 			rate -= decreaseRate;
@@ -103,9 +115,6 @@ class Game {
 
 	framePlaying(/* last */) {
 		const now = timestamp();
-		// pieces.update(Math.min(1, (now - last) / 1000.0));
-		// using requestAnimationFrame have to be able to handle large delta's
-		// caused when it 'hibernates' in a background or non-visible tab
 
 		const completedLines = this.grid.removeLines();
 		this.removedRows += completedLines.rows;
@@ -115,21 +124,26 @@ class Game {
 			// manager user piece
 			if (!user.piece) {
 				const newPiece = pieces.randomPiece(user.color);
+				const colWidth = Math.floor((this.grid.width) / COLUMNS);
+				const colIndex = this.getColumn() + 0.33;
+				const newX = Math.floor((colWidth) * colIndex);
 				user.setPiece(newPiece);
-				user.piece.x = Math.round(Math.random() * (this.grid.width - 4));
+				user.piece.x = newX;
 				user.piece.y = -2;
 			}
 			user.piece.unoccupied = (blocks) => !grid.occupied(blocks);
 			user.processCommand();
-			if (!user.piece.drop()) {
+			const impact = user.piece.drop();
+			if (!impact) {
 				const blocks = user.piece.getBlocks();
 				const isLast = blocks.findIndex((block) => block.y < 1) > -1;
 
-				if (isLast) this.gameover();
-
-				this.grid.freezeBlocks(blocks);
-				grid.addBlocks(user.piece.getBlocks());
-				user.setPiece(null);
+				if (IMPACT_TYPES.MOVING) {
+					if (isLast) this.gameover();
+					this.grid.freezeBlocks(blocks);
+					grid.addBlocks(user.piece.getBlocks());
+					user.setPiece(null);
+				}
 			} else {
 				grid.addBlocks(user.piece.getBlocks());
 			}
@@ -173,13 +187,20 @@ class Game {
 
 	render(now, grid) {
 		if (this.socket) {
+			const { score, vscore, playing } = this;
+			const scoreList = users
+				.current()
+				.sort((userA, userB) => (userA.score - userB.score))
+				.map((user) => user.toJson());
 			const renderObj = {
 				now,
+				score,
+				vscore,
+				playing,
 				blocks: grid.bitmap,
-				score: this.score,
-				vscore: this.vscore,
 				rows: this.removedRows,
 				users: users.list.length,
+				scoreList,
 				/*
 				dx: dx,
 				dy: dy,

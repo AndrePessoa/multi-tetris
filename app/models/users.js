@@ -44,11 +44,18 @@ class Users {
 	}
 
 	current() {
-		return this.list.filter((user) => user.status === USERSTATUS.PLAYING);
+		return this.list
+			.filter((user) => user.status === USERSTATUS.PLAYING)
+			.sort((userA, userB) => {
+				if (!userA.piece) return -1;
+				if (!userB.piece) return 1;
+				return userB.piece.y - userA.piece.y;
+			});
 	}
 
 	getLogged() {
-		return this.list.filter((user) => user.status !== USERSTATUS.LOGIN);
+		return this.list
+			.filter((user) => user.status !== USERSTATUS.LOGIN);
 	}
 
 	getPos(socket) {
