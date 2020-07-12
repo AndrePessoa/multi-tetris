@@ -14,20 +14,17 @@
 
   <div id="tetris">
     <main>
-      <div id="menu">
-        <p><span id="rows">0</span> <span id="score">00000</span><span id="users">0</span></p>
-      </div>
       <div class="wrapper">
         <canvas id="canvas">
           Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element
         </canvas>
         <aside>
-          <ul>
-            <li>1. 10004</li>
-            <li>2. 10003</li>
-            <li>3. 10002</li>
-            <li>4. 10001</li>
-            <li>5. 10000</li>
+          <ul id="users">
+            <li><span>1.</span> <i></i> 10004</li>
+            <li><span>2.</span> <i></i> 10003</li>
+            <li><span>3.</span> <i></i> 10002</li>
+            <li><span>4.</span> <i></i> 10001</li>
+            <li><span>5.</span> <i></i> 10000</li>
           </ul>
           <a id="qrcode" href="/control" target="_blank">
             <img src="/control/qrcode" />
@@ -37,10 +34,12 @@
     </main>
   </div>
 
-  <script src="js/stats.js"></script>
+  <script src="/js/stats.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
   <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
-  <script src="js/screen-ui.js"></script>
+  
+  <script src="/js/block.js"></script>
+  <script src="/js/screen-ui.js"></script>
 
   <script>
 

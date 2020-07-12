@@ -1,255 +1,158 @@
-const socket = io();
-const o = false;
-function get(id) {
-	return document.getElementById(id);
-}
-//-------------------------------------------------------------------------
-// game variables (initialized during reset)
-//-------------------------------------------------------------------------
+const USERSTATUS = {
+  OFFLINE: 0,
+	LOGIN: 1,
+	READY: 2,
+	PLAYING: 3,
+};
 
-const tetris = {
-	/*
-  init: function(){
-    this.dx, this.dy,        // pixel size of a single tetris block
-    this.blocks,        // 2 dimensional array (nx*ny) representing tetris court - either empty block or occupied by a 'piece'
-    this.actions,       // queue of user actions (inputs)
-    this.playing,       // true|false - game is in progress
-    this.dt,            // time since starting this game
-    this.current,       // the current piece
-    this.next,          // the next piece
-    this.score,         // the current score
-    this.vscore,        // the currently displayed score (it catches up to score in small chunks - like a spinning slot machine)
-    this.rows,          // number of completed rows in the current game
-    this.step;          // how long before current piece drops by 1 row
-
-    this.ucanvas = get('upcoming'),
-    this.uctx    = ucanvas.getContext('2d'),
-    this.speed   = { start: 0.6, decrement: 0.005, min: 0.1 }, // how long before piece drops by 1 row (seconds)
-    this.nx      = 10, // width of tetris court (in blocks)
-    this.ny      = 20, // height of tetris court (in blocks)
-    this.nu      = 5;  // width/height of upcoming preview (in blocks)
-      //console.log(ucanvas, uctx)
-    this.invalid = {};
+const stage = {
+  width: 7,
+  height: 7,
+  canvas: function() {
+    return $('#upcoming')[0];
   },
-  invalidate:       function()  { this.invalid.court  = true; },
-  invalidateNext:   function () { this.invalid.next   = true; },
-  invalidateScore:  function () { this.invalid.score  = true; },
-  invalidateRows:   function () { this.invalid.rows   = true; },
-
-  resize: function(event){
-    //canvas.width   = canvas.clientWidth;  // set canvas logical size equal to its physical size
-    //canvas.height  = canvas.clientHeight; // (ditto)
-    this.ucanvas.width  = this.ucanvas.clientWidth;
-    this.ucanvas.height = this.ucanvas.clientHeight;
-
-    this.dx = 200  / this.nx; // pixel size of a single tetris block
-    this.dy = 400 / this.ny; // (ditto)
-
-    this.invalidate();
-    this.invalidateNext();
+  getBlockPixels: function(canvas) {
+    return {
+      dx: canvas.width / this.width,
+      dy: canvas.height / this.height,
+    };
   }
-*/
 };
-const pieceObj = {
-	/*
-    init: function(){
 
-    },
-    eachblock: function (type, x, y, dir, fn) {
-      var bit, result, row = 0, col = 0, blocks = type.blocks[dir];
-      for(bit = 0x8000 ; bit > 0 ; bit = bit >> 1) {
-        if (blocks & bit) {
-          fn(x + col, y + row);
-        }
-        if (++col === 4) {
-          col = 0;
-          ++row;
-        }
-      }
-    },
-    dropPiece: function () {
-      this.eachblock(current.type, current.x, current.y, current.dir, function(x, y) {
-        setBlock(x, y, current.type);
-      });
-    },
-    drawPiece: function (ctx, type, x, y, dir) {
-      var loc = this;
-      this.eachblock(type, x, y, dir, function(x, y) {
-      loc.drawBlock(ctx, x, y, type.color);
-      });
-    },
-
-    drawBlock: function (ctx, x, y, color) {
-      ctx.fillStyle = color;
-      ctx.fillRect(x*dx, y*dy, dx, dy);
-      ctx.strokeRect(x*dx, y*dy, dx, dy)
+const user = {
+  status: USERSTATUS.OFFLINE,
+  piece: null,
+  points: 0,
+  color: null,
+  canvas: null,
+  render: function(){
+    switch(this.status){
+      case USERSTATUS.ACTIVE:
+      break;
+        $('.msg').html('Seu turno.');
+      break;
+      case USERSTATUS.NEXT:
+        $('.msg').html('Você é o próximo.');
+      break;
+      default:
+        $('.msg').html('');
     }
-    */
+
+    $('.keys').toggleClass('off', this.status !== USERSTATUS.PLAYING);
+    $('.keys').toggleClass('paused', this.status !== 3);
+    $('.points').html(this.points);
+    if(this.piece){
+      const ctx = this.canvas.getContext('2d');
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.piece.drawPiece();
+    }
+  },
+  init: function(){
+    // START
+    $(() => {
+      this.canvas = stage.canvas();
+      this.piece = new Piece(this.canvas, stage.width, stage.height);
+      const socket = io();
+      this.initConnection(socket);
+      this.addEvents(socket);
+    });
+  },
+  initConnection: function(socket) {
+    socket.on('user-render', (data) => {
+      this.status = data.status;
+      this.piece.update({...data.piece, x: 2, y: 2, color: 'rgba( 255, 255, 255, 1)'});
+      this.points = data.score;
+      this.render();
+    });
+    
+    socket.on('added user', (data) => {
+      //next = data;
+      console.log('added', data);
+    });
+    
+    socket.on('start turn', (data) => {
+      this.status = USERSTATUS.ACTIVE;
+      this.render();
+    });
+    
+    socket.on('next turn', (data) => {
+      this.render();
+    });
+    
+    socket.on('end turn', (data) => {
+      //next = data;
+      this.status = USERSTATUS.READY;
+      this.render();
+    });
+    
+    socket.on('connect', (data) => {
+      console.log('Conexão estabelecida');
+    });
+    socket.on('reconnect', (data) => {
+      console.log('Conexão restabelecida');
+    });
+    socket.on('connect_error', (data) => {
+      console.error('Conexão deu erro');
+    });
+    socket.on('reconnect_error', (data) => {
+      console.error('Conexão deu erro');
+    });
+  },
+  addEvents: function(socket){
+    const KEY = {
+      ESC: 27, SPACE: 32, LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40,
+    };
+	  document.addEventListener('keydown', (ev) => {
+      if (!Object.values(KEY).includes(ev.keyCode)) return false;
+      if (ev !== null) socket.emit('action', ev.keyCode);
+      ev.preventDefault();
+    }, false);
+
+    this.color = hslToRgb(
+      (Math.random()),
+      (Math.random() * 0.25 + 0.5),
+      (Math.random() * 0.25 + 0.25),
+    );
+
+    $(() => {
+      $('.keys div.space, .keys .row > div').click(function () {
+        if (!$('.keys').hasClass('off') && !$('.keys').hasClass('paused')) {
+          $('canvas').removeClass('moveDown moveLeft moveRight rotate');
+          switch ($(this).data('code')) {
+          case KEY.LEFT: setTimeout(() => {
+            $('canvas').addClass('moveLeft');
+          }, 5); break;
+          case KEY.RIGHT: setTimeout(() => {
+            $('canvas').addClass('moveRight');
+          }, 5); break;
+          case KEY.DOWN: setTimeout(() => {
+            $('canvas').addClass('moveDown');
+          }, 5); break;
+          case KEY.UP: setTimeout(() => {
+            $('canvas').addClass('rotate');
+          }, 5); break;
+          }
+        }
+        socket.emit('action', $(this).data('code'));
+      });
+    
+      $('#new_color').click(() => {
+        this.color = hslToRgb(
+          (Math.random()),
+          (Math.random() * 0.25 + 0.5),
+          (Math.random() * 0.25 + 0.25),
+        );
+        $('body').attr('style', `--user-color: rgba(${this.color.r},${this.color.g},${this.color.b}, 1)`);
+      });
+      $('#add').click(() => {
+        $('.keys').removeClass('hide');
+        $('#new_user').addClass('hide');
+        socket.emit('add user', this.color);
+      });
+
+      $('body').attr('style', `--user-color: rgba(${this.color.r},${this.color.g},${this.color.b}, 1)`);
+    });
+  }
 };
 
-let isCurrentPlayer = false;
-
-let dx; let dy; // pixel size of a single tetris block
-let blocks; // 2 dimensional array (nx*ny) representing tetris court - either empty block or occupied by a 'piece'
-let actions; // queue of user actions (inputs)
-let playing; // true|false - game is in progress
-let dt; // time since starting this game
-let pieceToDraw; // a dynamic piece that will be show to user
-let current; // the current piece
-let next; // the next piece
-let score; // the current score
-let vscore; // the currently displayed score (it catches up to score in small chunks - like a spinning slot machine)
-let rows; // number of completed rows in the current game
-let step; // how long before current piece drops by 1 row
-
-const ucanvas = get('upcoming');
-const uctx = ucanvas.getContext('2d');
-const speed = { start: 0.6, decrement: 0.005, min: 0.1 }; // how long before piece drops by 1 row (seconds)
-const nx = 10; // width of tetris court (in blocks)
-const ny = 20; // height of tetris court (in blocks)
-const nu = 5; // width/height of upcoming preview (in blocks)
-// console.log(ucanvas, uctx)
-const invalid = {};
-
-function invalidate() {
-	invalid.court = true;
-}
-function invalidateNext() {
-	invalid.next = true;
-}
-function invalidateScore() {
-	invalid.score = true;
-}
-function invalidateRows() {
-	invalid.rows = true;
-}
-
-function resize(event) {
-	// canvas.width   = canvas.clientWidth;  // set canvas logical size equal to its physical size
-	// canvas.height  = canvas.clientHeight; // (ditto)
-	// ucanvas.width  = ucanvas.clientWidth;
-	// ucanvas.height = ucanvas.clientHeight;
-
-
-	dx = 200 / nx; // pixel size of a single tetris block
-	dy = 400 / ny; // (ditto)
-
-	console.log(dx);
-	invalidate();
-	invalidateNext();
-}
-resize();
-//------------------------------------------------
-// do the bit manipulation and iterate through each
-// occupied block (x,y) for a given piece
-//------------------------------------------------
-function drawBlock(ctx, x, y, color) {
-	ctx.fillStyle = color;
-	ctx.fillRect(x * dx + 1, y * dy + 1, dx - 2, dy - 2);
-	ctx.strokeRect(x * dx, y * dy, dx, dy);
-}
-function eachblock(type, x, y, dir, fn) {
-	// console.log(type, x, y, dir)
-	let bit; let result; let row = 0; let col = 0; const
-		blocks = type.blocks[dir];
-	for (bit = 0x8000; bit > 0; bit >>= 1) {
-		if (blocks & bit) {
-			fn(x + col, y + row);
-		}
-		if (++col === 4) {
-			col = 0;
-			++row;
-		}
-	}
-}
-function drawPiece(ctx, type, x, y, color, dir) {
-	// var color = 'rgba('+type.color.r+','+type.color.g+','+type.color.b+', 0.5)';
-	eachblock(type, x, y, dir, (x, y) => {
-		drawBlock(ctx, x, y, color);
-	});
-}
-function drawDisplayPiece() {
-	if (invalid.next) {
-		// console.log(padding)
-		uctx.save();
-		uctx.translate(0.5, 0.5);
-		uctx.clearRect(0, 0, nu * dx, nu * dy);
-		// console.log(uctx)
-		if (pieceToDraw) var padding = (nu - pieceToDraw.type.size) / 2; // half-arsed attempt at centering next piece display
-		if (pieceToDraw) drawPiece(uctx, pieceToDraw.type, padding, padding, pieceToDraw.color, pieceToDraw.dir);
-		// uctx.strokeStyle = 'black';
-		// uctx.strokeRect(0, 0, nu*dx - 1, nu*dy - 1);
-		uctx.restore();
-		invalid.next = false;
-	}
-}
-invalidate();
-invalidateNext();
-invalidateScore();
-invalidateRows();
-
-/*
-  socket.on('render', function(data){
-    //next = data.next;
-    current = data.current;
-
-    //console.log(next.type);
-    invalid.next = true;
-    pieceToDraw = ( isCurrentPlayer )? current : next;
-    //pieceToDraw.type.color = data.color;
-
-    drawDisplayPiece();
-
-    //
-    $('.keys').toggleClass('paused',!data.playing);
-  }); */
-
-socket.on('user-render', (data) => {
-	// next = data.next;
-	// current = data.current;
-
-	// console.log(next.type);
-	invalid.next = true;
-	pieceToDraw = data.piece;// ( isCurrentPlayer )? current : next;
-	// pieceToDraw.type.color = data.color;
-	$('.points').html(data.score);
-	drawDisplayPiece();
-
-	//
-	$('.keys').toggleClass('paused', data.status !== 3);
-});
-
-socket.on('added user', (data) => {
-	next = data;
-	console.log('added', data);
-});
-
-socket.on('start turn', (data) => {
-	isCurrentPlayer = true;
-	$('.msg').html('Seu turno.');
-	$('.keys').toggleClass('off', false);
-});
-
-socket.on('next turn', (data) => {
-	$('.msg').html('Você é o próximo.');
-});
-
-socket.on('end turn', (data) => {
-	next = data;
-	isCurrentPlayer = false;
-	$('.msg').html('');
-	$('.keys').toggleClass('off', true);
-});
-
-socket.on('connect', (data) => {
-	console.log('Conexão estabelecida');
-});
-socket.on('reconnect', (data) => {
-	console.log('Conexão restabelecida');
-});
-socket.on('connect_error', (data) => {
-	console.error('Conexão deu erro');
-});
-socket.on('reconnect_error', (data) => {
-	console.error('Conexão deu erro');
-});
+user.init();

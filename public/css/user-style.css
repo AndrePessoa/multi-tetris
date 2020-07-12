@@ -9,22 +9,8 @@ body{
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-}
-
-body:after {
-  display: block;
-  content: " ";
-  background: #ddd;
-  background-image: url(../img/user-bg.jpg);
-  width: 100vw;
-  height: 100vh;
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  left: 0;
-  opacity: 0.7;
-  z-index: -1;
+  background-color: var(--user-color);
+  transition: background .2s;
 }
 
 .panel{
@@ -48,42 +34,67 @@ body:after {
 }
 .points {
   position: absolute;
-  top: 25px;
-  right: 25px;
+  top: 0;
+  right: 0;
+  width: 100%;
+  opacity: 0.97;
+  font-size: 135px;
+  font-weight: bold;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: normal;
+  letter-spacing: 8.95px;
+  text-align: center;
+  color: rgba(225, 248, 253, 0.29);
 }
 #new_user{
-  padding: 20vh 50px;
+  padding: 0 25px;
+  z-index: 1;
+  position: relative;
+  background-color: var(--user-color);
+  transition: background .2s;
 }
 #new_user input{
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 3px;
+  box-shadow: 0 0 5px 0px rgba(255, 255, 255, 0.27);
+  border: solid 2px #ffffff;
+  padding: 35px 0;
   color: white;
   opacity: 1;
   outline: none;
   background: none;
-  padding: 10px;
   font-size: 1.5em;
   width: 100%;
+  margin: 0 0 15px;
+}
+#new_user input:last-child {
+  background-color: white;
+  color: var(--user-color);
+}
+#new_user img {
+  display: block;
+  margin: 80px auto 80px;
 }
 
-#new_user input:first-child{
-  margin-bottom: 15px;
-}
 .keys {
   width: 100%;
+  max-width: 400px;
   clear: both;
   text-align: center;
   display: table;  
   position: relative;
+  padding-top: 260px;
+  margin: 0 auto;
+}
+.keys .row {
+  padding: 0 6px;
 }
 .keys .row > div {
+  padding: 6px;
   position: relative;
   max-width: 150px;
-  /* height: 150px; */
   text-align: center;
-  padding: 10px;
-  border: 1px solid rgba(2, 255, 94, 0.47);
   float: left;
-  /* border-radius: 50%; */
   display: -ms-flexbox;
   box-sizing: border-box;
   -webkit-flex-wrap: wrap;
@@ -95,7 +106,7 @@ body:after {
   fill: #51CA7D;
 }
 
-.keys .down{
+.keys .key-down{
   margin-left: 33.33%;
 }
 .keys > .space{
@@ -116,15 +127,20 @@ body:after {
   transition: all 1s, display 0s 1s;
 }
 
+.keys img {
+  width: 100%;
+  background: white;
+  border-radius: 5px;
+  display: block;
+}
 
-
-.keys.off svg {
-  opacity: 0.2;
+.keys.off div > div {
+  opacity: .2;
 }
 
 .keys.off .row > div,
 .keys.paused .row > div{
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  opacity: .3;
 }
 
 .keys.off polygon,
@@ -134,8 +150,6 @@ body:after {
   fill: rgb(255, 255, 255);
 }
 
-.keys.off > .space{
-}
 .keys.paused > .space{
   display: block;
   opacity: 1
@@ -147,24 +161,19 @@ body:after {
   padding: 10px;
   height: 17px;
 }
-#upcoming { position: absolute; display: block; margin: 0 auto; /*background-color: #E0E0E0;*/ }
-@media screen and (min-width:   0px) and (min-height:   0px)  {  #upcoming { width:  50px; height:  50px; }  } /* 10px chunks */
-@media screen and (min-width: 400px) and (min-height: 400px)  {  #upcoming { width:  75px; height:  75px; }  } /* 15px chunks */
-@media screen and (min-width: 500px) and (min-height: 500px)  {  #upcoming { width: 100px; height: 100px; }  } /* 20px chunks */
-@media screen and (min-width: 600px) and (min-height: 600px)  {  #upcoming { width: 125px; height: 125px; }  } /* 25px chunks */
-@media screen and (min-width: 700px) and (min-height: 700px)  {  #upcoming { width: 150px; height: 150px; }  } /* 30px chunks */
-@media screen and (min-width: 800px) and (min-height: 800px)  {  #upcoming { width: 175px; height: 175px; }  } /* 35px chunks */
-@media screen and (min-width: 900px) and (min-height: 900px)  {  #upcoming { width: 200px; height: 200px; }  } /* 40px chunks */
-
 #upcoming {
-  width: 100% !important;
-  height: 100% !important;
-  /* margin: -10px; */
-  top: 0;
+  position: absolute;
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  width: 300px;
+  height: 300px;
   bottom: 0;
   right: 0;
   left: 0;
+  top: 0;
 }
+
 .hide{
   display: none;
 }
@@ -175,18 +184,18 @@ body:after {
 .rotate{ animation: rotate 0.25s;  }
 
 @keyframes moveLeft {
-    0% {left: -10px;}
+    0% {left: -20px;}
     100% {left: 0px;}
 }
 @keyframes moveRight {
-    0% {left: 10px;}
+    0% {left: 20px;}
     100% {left: 0px;}
 }
 @keyframes moveDown {
-    0% {top: 10px;}
+    0% {top: 20px;}
     100% {top: 0px;}
 }
 @keyframes rotate {
-    0% {    transform: rotate( 10deg );}
+    0% {    transform: rotate( 30deg );}
     100% {  transform: rotate( 0 );}
 }

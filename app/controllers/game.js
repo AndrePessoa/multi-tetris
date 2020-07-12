@@ -199,7 +199,7 @@ class Game {
 				playing,
 				blocks: grid.bitmap,
 				rows: this.removedRows,
-				users: users.list.length,
+				users: users.list.map((user)=>user.toJson()),
 				scoreList,
 				/*
 				dx: dx,
