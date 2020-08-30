@@ -16,13 +16,18 @@ class User {
 		this.piece = null;
 		this.score = 0;
 		this.lastCommands = [];
-		this.status = USERSTATUS.LOGIN;
 
 		socket.on('action', (command) => {
 			logger.log('User action:', this.id, command);
 		});
 
 		logger.log('New user: ', color);
+	}
+
+	reset() {
+		this.piece = null;
+		this.score = 0;
+		this.lastCommands = [];
 	}
 
 	setPiece(piece) {

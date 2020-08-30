@@ -41,7 +41,7 @@ const screen = {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     this.blocks.forEach((line) => {
-      line.forEach((block) => { if(block) { Block.drawBlock( ctx, block.x, block.y, dx, dy, block.color );} });
+      line.forEach((block) => { if(block) { Block.drawBlock( ctx, block.x, block.y, dx, dy, block.color, block.ghost );} });
     });
     // Scores
     $('#users').html(this.users.map((user, i)=>`<li><span>${i+1}º</span> <i style="background: rgb(${user.color.r}, ${user.color.g}, ${user.color.b});" ></i> ${user.score}</li>`));

@@ -19,10 +19,11 @@ class Grid {
 	}
 
 	freezeBlocks(blocks) {
-		blocks = blocks.map((block) => {
-			block.active = false; return block;
+		blocks.forEach((block) => {
+			block.active = false;
 		});
 		this.blocks.addBlocks(blocks);
+		return blocks;
 	}
 
 	removeLine(n) {

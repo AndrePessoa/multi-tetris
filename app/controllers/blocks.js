@@ -64,7 +64,7 @@ class Blocks {
 	occupied(blocks) {
 		let result = IMPACT_TYPES.NONE;
 		blocks.forEach((block) => {
-			if (result) return true;
+			if (result === IMPACT_TYPES.IMPACT) return true;
 			const isOutsideArea = (block.x < 0) || (block.x >= this.width) || (block.y >= this.height);
 			const isOccupied = this.getBlock(block.x, block.y);
 			const isInvalid = (isOutsideArea || isOccupied);
@@ -74,8 +74,6 @@ class Blocks {
 				result = isActiveBlock
 					? IMPACT_TYPES.MOVING
 					: IMPACT_TYPES.IMPACT;
-			} else {
-				result = IMPACT_TYPES.NONE;
 			}
 		});
 		return result;

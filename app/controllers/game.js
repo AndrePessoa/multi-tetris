@@ -1,6 +1,5 @@
 const logger = require('../libs/logger');
 const { timestamp, random } = require('../libs/utils');
-const IMPACT_TYPES = require('../libs/impactTypes');
 
 const { User } = require('../models/user');
 const Grid = require('./grid');
@@ -8,6 +7,8 @@ const Block = require('../models/block');
 const { users, USERSTATUS } = require('../models/users');
 const pieces = require('../models/pieces');
 const configs = require('../config/grid_config');
+
+const IMPACT_TYPES = require('../libs/impactTypes');
 
 const KEYS = require('../libs/keys');
 
@@ -122,6 +123,7 @@ class Game {
 		const grid = this.grid.snapshot();
 		users.current().forEach((user) => {
 			// manager user piece
+			// if user dont have a piece, create it
 			if (!user.piece) {
 				const newPiece = pieces.randomPiece(user.color);
 				const colWidth = Math.floor((this.grid.width) / COLUMNS);
@@ -131,20 +133,35 @@ class Game {
 				user.piece.x = newX;
 				user.piece.y = -2;
 			}
+
 			user.piece.unoccupied = (blocks) => !grid.occupied(blocks);
 			user.processCommand();
-			const impact = user.piece.drop();
-			if (!impact) {
+			const impact = !user.piece.drop(); // automatic drop piece
+			// if have impact fix the piece
+			if (impact) {
 				const blocks = user.piece.getBlocks();
 				const isLast = blocks.findIndex((block) => block.y < 1) > -1;
 
-				if (IMPACT_TYPES.MOVING) {
-					if (isLast) this.gameover();
-					this.grid.freezeBlocks(blocks);
-					grid.addBlocks(user.piece.getBlocks());
-					user.setPiece(null);
-				}
+				if (isLast) this.gameover();
+				this.grid.freezeBlocks(blocks);
+				grid.addBlocks(user.piece.getBlocks());
+				user.setPiece(null);
 			} else {
+				// create ghost
+				const ghost = user.piece.clone();
+				ghost.unoccupied = ((blocks) => {
+					const imp = grid.occupied(blocks);
+					logger.log('impact', imp);
+					return imp !== IMPACT_TYPES.IMPACT;
+				});
+
+				while(ghost.drop()) {}; // loop drop until impact on floor
+
+				const blocks = ghost.getBlocks();
+				blocks.forEach((block) => {
+					block.ghost = 'true';
+				});
+				grid.addBlocks(blocks);
 				grid.addBlocks(user.piece.getBlocks());
 			}
 			// manager user points
@@ -152,6 +169,10 @@ class Game {
 
 			user.emit('user-render');
 		});
+
+		if (this.playing) {
+			logger.log('playing');
+		}
 
 		return {
 			now,
@@ -164,6 +185,7 @@ class Game {
 		let last = timestamp();
 		const now = last;
 		logger.log('Runming', last);
+
 		const frame = () => {
 			if (this.playing) {
 				const {
@@ -192,6 +214,7 @@ class Game {
 				.current()
 				.sort((userA, userB) => (userA.score - userB.score))
 				.map((user) => user.toJson());
+
 			const renderObj = {
 				now,
 				score,
@@ -199,7 +222,7 @@ class Game {
 				playing,
 				blocks: grid.bitmap,
 				rows: this.removedRows,
-				users: users.list.map((user)=>user.toJson()),
+				users: users.list.map((user) => user.toJson()),
 				scoreList,
 				/*
 				dx: dx,
@@ -229,6 +252,7 @@ class Game {
 	}
 
 	reset() {
+		users.list.forEach((user) => user.reset());
 		this.score = 0;
 		this.vscore = 0;
 		this.grid.reset();

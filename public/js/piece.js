@@ -6,6 +6,7 @@ const Piece = function(canvas, nx, ny) {
   this.y = 0;
   this.dir = 1;
   this.active = false;
+  this.ghost = false;
 
   this.nx = nx;
   this.ny = ny;
@@ -13,7 +14,7 @@ const Piece = function(canvas, nx, ny) {
 
 Piece.prototype.update = function(data){
   if(!data) return;
-  const props = ['x', 'y', 'dir', 'color','type', 'active', 'ctx'];
+  const props = ['x', 'y', 'dir', 'color','type', 'active', 'ctx', 'ghost'];
   props.forEach((prop)=>{
     if(data[prop] !== undefined) this[prop] = data[prop];
   });
@@ -38,7 +39,8 @@ Piece.prototype.eachblock = function(type, x, y, dir, fn) {
 Piece.prototype.drawPiece = function() {
   const {dx, dy} = stage.getBlockPixels(this.canvas);
   this.eachblock(this.type, this.x, this.y, this.dir, (x, y) => {
-    Block.drawBlock(this.ctx, x, y, dx, dy, this.color, true);
+    console.log(this);
+    Block.drawBlock(this.ctx, x, y, dx, dy, this.color, this.ghost);
   });
   return this;
 };

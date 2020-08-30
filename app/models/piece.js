@@ -17,10 +17,21 @@ class Piece {
 		this.x 		= 0;
 		this.y 		= 0;
 		this.userId = false;
+		this.ghost = false;
 	}
 
 	static unoccupied(blocks) {
 		return blocks;
+	}
+
+	clone() {
+		const clone = new Piece(this.type);
+		clone.dir = this.dir;
+		clone.color = this.color;
+		clone.x = this.x;
+		clone.y = this.y;
+
+		return clone;
 	}
 
 	move(dir) {

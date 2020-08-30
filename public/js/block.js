@@ -2,12 +2,13 @@
 
 const Block = {
   drawBlock: function (ctx, x, y, dx, dy, color, active) {
-    const [marginX, marginY] = [ dx, dy ].map((val) => (Math.floor(val * .075) * 2));
+    const strokeWidth = 2;
+    const [marginX, marginY] = [ dx, dy ].map((val) => (Math.floor(val * .075) * 2 + strokeWidth));
     const marginM = (marginX + marginY) / 2;
     // console.log(dx, dy, marginX, marginY, marginM);
-    ctx.fillStyle = color;
+    ctx.fillStyle = active ? 'transparent' : color;
     ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
+    ctx.lineWidth = strokeWidth;
     ctx.shadowColor = color.replace(', 1 )', ', 0.25 )');
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
@@ -18,8 +19,10 @@ const Block = {
       Math.round(y * dy + marginY/2), 
       Math.round(dx - marginX),
       Math.round(dy - marginY),
-      marginM
-    ).fill();
+      marginM - strokeWidth
+    );
+    ctx.fill();
+    ctx.stroke();
     // ctx.fillRect(x * dx + 1.5, y * dy + 1.5, dx - 3, dy - 3);
     // if (active) ctx.fillRect(x * dx + 1.5, y * dy + 1.5, dx - 3, dy - 3);
     // if (!active) ctx.strokeRect(x * dx, y * dy, dx, dy);
